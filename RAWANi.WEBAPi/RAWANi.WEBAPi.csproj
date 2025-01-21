@@ -34,7 +34,6 @@
 
   <ItemGroup>
     <Folder Include="Health\" />
-    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
 </Project>
