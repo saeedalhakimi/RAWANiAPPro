@@ -112,7 +112,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 _logger.LogInformation($"User profile {userProfile.Payload!.UserProfileID} created successfully.");
 
                 // Step 5: Add the user to the default role
-                const string defaultRole = "User"; // Define the default role
+                const string defaultRole = "User "; // Define the default role
                 if (!await _roleManager.RoleExistsAsync(defaultRole))
                 {
                     await _roleManager.CreateAsync(new IdentityRole(defaultRole));
