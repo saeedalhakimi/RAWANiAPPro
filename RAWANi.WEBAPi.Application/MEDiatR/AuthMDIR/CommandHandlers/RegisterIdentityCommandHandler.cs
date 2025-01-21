@@ -153,7 +153,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 return OperationResult<ResponseWithTokensDto>.Failure(new Error(
                     ErrorCode.UnknownError,
                     $"An error occurred: {ex.Message}",
-                    $"{ex.Source} - {ex.ToString()}"));
+                    $"{ex.Source} - {ex.ToString()}."));
             }
         }
     }
