@@ -28,8 +28,11 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
         [ValidateModel]
         public async Task<IActionResult> Register([FromForm] RegisterIdentityCommand command)
         {
+            _logger.LogInformation("Registering new user.");
             var result = await _mediator.Send(command);
             if(!result.IsSuccess) return HandleErrorResponse(result);
+
+            _logger.LogInformation("User registered successfully.");
             return Ok(result);
         }
     }

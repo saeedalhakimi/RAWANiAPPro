@@ -50,6 +50,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 nameof(LoggMessage.MDIHandlingRequest)));
 
             using var transaction = _ctx.Database.BeginTransaction();
+            _logger.LogInformation("Transaction initiated successfully.");
 
             try
             {
@@ -59,7 +60,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return OperationResult<ResponseWithTokensDto>.Failure(new Error(
-                            ErrorCode.ConflictError, "Existing User Conflict"
+                            ErrorCode.ConflictError, "Existing User Conflict."
                             , "The email address is already associated with another account."));
                 }
 
@@ -87,6 +88,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                         ErrorCode.InternalServerError, $"Identity Creation Error: {errorDescriptions}"
                         , "An error occurred while creating the user account."));
                 }
+                _logger.LogInformation($"User {identity.UserName} created successfully.");
 
                 //Step 3: Create the basic information
                 var basicIformation = BasicInformation.Create(
@@ -107,6 +109,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 }
                 _ctx.UserProfiles.Add(userProfile.Payload!);
                 await _ctx.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation($"User profile {userProfile.Payload!.UserProfileID} created successfully.");
 
                 // Step 5: Add the user to the default role
                 const string defaultRole = "User"; // Define the default role
@@ -126,9 +129,11 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                         "An error occurred while assigning the user role."
                     ));
                 }
+                _logger.LogInformation($"User {identity.UserName} added to the {defaultRole} role.");
 
                 // Commit the transaction
                 await transaction.CommitAsync(cancellationToken);
+                _logger.LogInformation("Transaction committed successfully.");
 
                 // Step 8: Generate the JWT tokens
                 var roles = new List<string> { defaultRole }; // Add more roles if needed
