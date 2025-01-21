@@ -364,4 +364,3 @@ FodyWeavers.xsd
 
 # Ignore the wwwroot folder
 /wwwroot
-.wwwroot/
