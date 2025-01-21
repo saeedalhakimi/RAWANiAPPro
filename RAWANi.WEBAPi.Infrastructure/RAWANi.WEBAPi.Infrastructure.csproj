@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RAWANi.WEBAPi.Application\RAWANi.WEBAPi.Application.csproj" />
+    <ProjectReference Include="..\RAWANi.WEBAPi.Domain\RAWANi.WEBAPi.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
