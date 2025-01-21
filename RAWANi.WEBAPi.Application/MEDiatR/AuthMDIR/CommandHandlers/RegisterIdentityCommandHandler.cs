@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using RAWANi.WEBAPi.Application.Contracts.AuthDtos.Responses;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
@@ -25,6 +26,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly ILoggMessagingService _messagingService;
         private readonly JwtService _jwtService;
         private readonly IFileService _fileService;
+        private readonly ErrorHandler _errorHandler;
         public RegisterIdentityCommandHandler(
             DataContext ctx,
             UserManager<IdentityUser> userManager,
@@ -32,7 +34,8 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             IAppLogger<RegisterIdentityCommandHandler> appLogger,
             ILoggMessagingService messagingService,
             JwtService jwtService,
-            IFileService fileService)
+            IFileService fileService,
+            ErrorHandler errorHandler)
         {
             _ctx = ctx;
             _userManager = userManager;
@@ -41,6 +44,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             _messagingService = messagingService;
             _jwtService = jwtService;
             _fileService = fileService;
+            _errorHandler = errorHandler;
         }
         
         public async Task<OperationResult<ResponseWithTokensDto>> Handle(
@@ -56,22 +60,15 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             {
                 // Step 1: Check if the user already exists
                 var user = await _userManager.FindByNameAsync(request.Username);
-                if (user != null)
-                {
+                if (user != null) 
+                { 
                     await transaction.RollbackAsync(cancellationToken);
-                    return OperationResult<ResponseWithTokensDto>.Failure(new Error(
-                            ErrorCode.ConflictError, "Existing User Conflict."
-                            , "The email address is already associated with another account."));
+                    return _errorHandler.ResourceAlreadyExists<ResponseWithTokensDto>(request.Username);
                 }
 
                 // Step 2: Save the profile picture and generate a unique link
-                string imageLink = null;
-                if (request.ProfilePicture != null && request.ProfilePicture.Length > 0)
-                {
-                    var uniqueFileName = await _fileService.SaveFileAsync(
-                        request.ProfilePicture.OpenReadStream(), request.ProfilePicture.FileName);
-                    imageLink = $"/uploads/{uniqueFileName}"; // Adjust the link as needed
-                }
+                string imageLink = await SaveProfilePictureAsync(request.ProfilePicture);
+
 
                 // Step 3: Create the identity user
                 var identity = new IdentityUser
@@ -150,11 +147,20 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return OperationResult<ResponseWithTokensDto>.Failure(new Error(
-                    ErrorCode.UnknownError,
-                    $"An error occurred: {ex.Message}",
-                    $"{ex.Source} - {ex.ToString()}."));
+                return _errorHandler.HandleException<ResponseWithTokensDto>(ex);
             }
         }
+
+        private async Task<string> SaveProfilePictureAsync(IFormFile profilePicture)
+        {
+            if (profilePicture == null || profilePicture.Length == 0)
+                return null;
+
+            var uniqueFileName = await _fileService.SaveFileAsync(
+                profilePicture.OpenReadStream(), profilePicture.FileName);
+            return $"/uploads/{uniqueFileName}";
+        }
+
+       
     }
 }

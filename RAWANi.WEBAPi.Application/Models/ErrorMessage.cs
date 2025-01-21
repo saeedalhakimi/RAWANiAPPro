@@ -13,9 +13,13 @@ namespace RAWANi.WEBAPi.Application.Models
         public const string DatabaseError = ": Database error; Failed to procces data.";
         public const string UnknownError = ": An unexpected error occurred.";
         public const string ErrorMappingData = ": Error occurred while mapping resources.";
-        public const string CreationFailed = ": Failed to create entity";
+        public const string CreationFailed = ": Failed to create Resource. ";
         public const string EmailConflict = ": Email conflict.";
         public const string GOVIDCONFLICT = ": Government id conflict";
+        public const string CONFLICTERROR = ": Conflict error occurred.";
+        public const string ResourceAlreadyExists = "This resource already exists in the system.";
+       
+
 
 
         //public const string UnexpectedError = "An unexpected error occurred";

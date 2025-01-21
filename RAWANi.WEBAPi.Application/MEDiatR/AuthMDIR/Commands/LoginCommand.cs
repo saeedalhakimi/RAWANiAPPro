@@ -11,5 +11,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands
 {
     public class LoginCommand : IRequest<OperationResult<ResponseWithTokensDto>>
     {
+        public string Username { get; set; }
+        public string Password { get; set; }
     }
 }

@@ -20,6 +20,8 @@ namespace RAWANi.WEBAPi.Services
                 { nameof(ErrorMessage.CreationFailed), ErrorMessage.CreationFailed },
                 { nameof(ErrorMessage.EmailConflict), ErrorMessage.EmailConflict },
                 { nameof(ErrorMessage.GOVIDCONFLICT), ErrorMessage.GOVIDCONFLICT },
+                { nameof(ErrorMessage.CONFLICTERROR), ErrorMessage.CONFLICTERROR },
+                { nameof(ErrorMessage.ResourceAlreadyExists), ErrorMessage.ResourceAlreadyExists },
 
             };
 

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using RAWANi.WEBAPi.Application.Contracts.AuthDtos.Requests;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands;
 using RAWANi.WEBAPi.Application.Services;
 using RAWANi.WEBAPi.Filters;
@@ -26,13 +27,32 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
 
         [HttpPost(ApiRoutes.AuthRouts.Registration, Name = "Register")]
         [ValidateModel]
-        public async Task<IActionResult> Register([FromForm] RegisterIdentityCommand command)
+        public async Task<IActionResult> Register(
+            [FromForm] RegisterIdentityCommand command)
         {
             _logger.LogInformation("Registering new user.");
             var result = await _mediator.Send(command);
             if(!result.IsSuccess) return HandleErrorResponse(result);
 
             _logger.LogInformation("User registered successfully.");
+            return Ok(result);
+        }
+
+        [HttpPost(ApiRoutes.AuthRouts.Login, Name = "Login")]
+        [ValidateModel]
+        public async Task<IActionResult> Login(
+            [FromBody] LoginDto loginDto)
+        {
+            _logger.LogInformation("Logging in user.");
+
+            var command = new LoginCommand
+            {
+                Username = loginDto.Username,
+                Password = loginDto.Password
+            };
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            _logger.LogInformation("User logged in successfully.");
             return Ok(result);
         }
     }

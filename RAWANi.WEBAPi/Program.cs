@@ -96,6 +96,7 @@ try
 
     builder.Services.AddScoped<ILoggMessagingService, LoggMessagingService>();
     builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
+    builder.Services.AddScoped<ErrorHandler>();
 
     // Register MediatR
     builder.Services.AddMediatR(cfg =>

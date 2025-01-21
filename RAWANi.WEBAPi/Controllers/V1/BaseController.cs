@@ -25,8 +25,10 @@ namespace RAWANi.WEBAPi.Controllers.V1
             { ErrorCode.InvalidInput, (400, "Bad Request")}, // Indicates that the request is invalid or malformed
             { ErrorCode.OperationCancelled, (499, "Client Closed Request")}, // Indicates that the client closed the request before the server could respond
             { ErrorCode.InternalServerError, (500, "Internal Server Error")}, // Indicates an unexpected error on the server
-            { ErrorCode.ConflictError, (409, "Conflict")}, // Indicates that the request could not be completed due to a conflict
+            { ErrorCode.ConflictError, (409, "Conflict error occurred")}, // Indicates that the request could not be completed due to a conflict
             { ErrorCode.ValidationError, (422, "Unprocessable Entity")}, // Indicates that the request could not be completed due to validation errors
+            { ErrorCode.Unauthorized, (401, "Unauthorized access")}, // Indicates that the request could not be completed due to a lack of authorization
+            { ErrorCode.LockedOut, (423, "Locked Out")}, // Indicates that the request could not be completed due to a lack of authorization
         };
 
         protected IActionResult HandleErrorResponse<T>

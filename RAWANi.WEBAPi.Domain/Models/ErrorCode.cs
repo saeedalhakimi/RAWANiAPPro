@@ -17,5 +17,6 @@ namespace RAWANi.WEBAPi.Domain.Models
         ConflictError = 1004,
         ValidationError = 1005,
         Unauthorized = 1006,
+        LockedOut = 1007,
     }
 }
