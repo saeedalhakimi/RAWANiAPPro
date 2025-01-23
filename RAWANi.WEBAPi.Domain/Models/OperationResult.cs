@@ -8,7 +8,7 @@ namespace RAWANi.WEBAPi.Domain.Models
 {
     public class OperationResult<T>
     {
-        public T? Payload { get; private set; }
+        public T? Data { get; private set; }
         public bool IsError { get; private set; }
         public bool IsSuccess => !IsError; // New IsSuccess property
         public List<Error> Errors { get; private set; } = new List<Error>();
@@ -17,7 +17,7 @@ namespace RAWANi.WEBAPi.Domain.Models
         // Constructor for success
         private OperationResult(T playload)
         {
-            Payload = playload;
+            Data = playload;
             IsError = false;
             Timestamp = DateTime.UtcNow;
         }
@@ -112,7 +112,7 @@ namespace RAWANi.WEBAPi.Domain.Models
         {
             return IsError
                 ? $"Error(s) occurred at {Timestamp}: {string.Join(", ", Errors.Select(e => e.Message))}"
-                : $"Success at {Timestamp}: {Payload}";
+                : $"Success at {Timestamp}: {Data}";
         }
 
     }

@@ -170,6 +170,13 @@ try
             };
         });
 
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+        options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+        options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+    });
+
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 

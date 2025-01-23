@@ -45,6 +45,16 @@ namespace RAWANi.WEBAPi.Application.Models
                 $"An error occurred: {ex.Message}",
                 $"{ex.Source} - {ex.ToString()}."));
         }
+
+        public OperationResult<T> HandleCancelationToken<T>(OperationCanceledException ex)
+        {
+            _logger.LogError(_messagingService.GetErrorMessage(nameof(ErrorMessage.UnknownError)), ex);
+            return OperationResult<T>.Failure(new Error(
+                ErrorCode.OperationCancelled,
+                $"The operation was canceled: {ex.Message}",
+                $"{ex.Source} - {ex.ToString()}."));
+        }
+        
     }
     
 }

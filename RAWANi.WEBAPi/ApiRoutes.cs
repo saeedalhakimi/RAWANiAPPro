@@ -34,6 +34,13 @@
             public const string GetByPersonNumber = "personnumber/{personNumber}";
         }
 
+        public static class Roles
+        {
+            public const string RoleIDRoute = "{roleID}";
+            public const string AssignRole = "assign";
+            public const string RemoveRole = "unassign";
+        }
+
         /// <summary>
         /// Routes related to user profiles.
         /// </summary>

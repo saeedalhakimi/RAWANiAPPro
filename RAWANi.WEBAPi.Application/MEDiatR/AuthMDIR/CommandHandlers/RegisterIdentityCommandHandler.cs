@@ -50,27 +50,34 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         public async Task<OperationResult<ResponseWithTokensDto>> Handle(
             RegisterIdentityCommand request, CancellationToken cancellationToken)
         {
+            // Log the start of the request handling
             _logger.LogInformation(_messagingService.GetLoggMessage(
-                nameof(LoggMessage.MDIHandlingRequest)));
+                nameof(LoggMessage.MDIHandlingRequest), new[] { nameof(RegisterIdentityCommand) }));
 
             using var transaction = _ctx.Database.BeginTransaction();
             _logger.LogInformation("Transaction initiated successfully.");
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Step 1: Check if the user already exists
+                _logger.LogInformation("Checking if user already exists with username: {Username}", request.Username);
                 var user = await _userManager.FindByNameAsync(request.Username);
                 if (user != null) 
-                { 
+                {
+                    _logger.LogWarning("User already exists with username: {Username}", request.Username);
                     await transaction.RollbackAsync(cancellationToken);
                     return _errorHandler.ResourceAlreadyExists<ResponseWithTokensDto>(request.Username);
                 }
 
                 // Step 2: Save the profile picture and generate a unique link
+                _logger.LogInformation("Saving profile picture for user: {Username}", request.Username);
                 string imageLink = await SaveProfilePictureAsync(request.ProfilePicture);
 
 
                 // Step 3: Create the identity user
+                _logger.LogInformation("Creating identity user for username: {Username}", request.Username);
                 var identity = new IdentityUser
                 {
                     UserName = request.Username,
@@ -79,45 +86,53 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 var identityResult = await _userManager.CreateAsync(identity, request.Password);
                 if (!identityResult.Succeeded)
                 {
+                    _logger.LogError("Failed to create identity user: {Errors}",
+                         string.Join("; ", identityResult.Errors.Select(e => e.Description)));
                     await transaction.RollbackAsync(cancellationToken);
                     var errorDescriptions = string.Join("; ", identityResult.Errors.Select(e => e.Description));
                     return OperationResult<ResponseWithTokensDto>.Failure(new Error(
                         ErrorCode.InternalServerError, $"Identity Creation Error: {errorDescriptions}"
                         , "An error occurred while creating the user account."));
                 }
-                _logger.LogInformation($"User {identity.UserName} created successfully.");
 
                 //Step 3: Create the basic information
-                var basicIformation = BasicInformation.Create(
+                _logger.LogInformation("Creating basic information for user: {Username}", request.Username);
+                var basicInformation = BasicInformation.Create(
                     request.FirstName, request.LastName, request.Username, 
                     request.DateOfBirth,request.Gender);
-                if (!basicIformation.IsSuccess)
+                if (!basicInformation.IsSuccess)
                 {
+                    _logger.LogError("Failed to create basic information: {Errors}",
+                        string.Join("; ", basicInformation.Errors.Select(e => e.Message)));
                     await transaction.RollbackAsync(cancellationToken);
-                    return OperationResult<ResponseWithTokensDto>.Failure(basicIformation.Errors);
+                    return OperationResult<ResponseWithTokensDto>.Failure(basicInformation.Errors);
                 }
 
                 // Step 4: Create the user profile
-                var userProfile = UserProfile.Create(identity.Id, basicIformation.Payload!, imageLink);
+                _logger.LogInformation("Creating user profile for user: {Username}", request.Username);
+                var userProfile = UserProfile.Create(identity.Id, basicInformation.Data!, imageLink);
                 if (!userProfile.IsSuccess)
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return OperationResult<ResponseWithTokensDto>.Failure(userProfile.Errors);
                 }
-                _ctx.UserProfiles.Add(userProfile.Payload!);
+                await _ctx.UserProfiles.AddAsync(userProfile.Data!, cancellationToken);
                 await _ctx.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation($"User profile {userProfile.Payload!.UserProfileID} created successfully.");
 
                 // Step 5: Add the user to the default role
                 const string defaultRole = "User "; // Define the default role
+                _logger.LogInformation("Adding user to default role: {Role}", defaultRole);
                 if (!await _roleManager.RoleExistsAsync(defaultRole))
                 {
+                    _logger.LogInformation("Creating default role: {Role}", defaultRole);
                     await _roleManager.CreateAsync(new IdentityRole(defaultRole));
                 }
 
                 var roleResult = await _userManager.AddToRoleAsync(identity, defaultRole);
                 if (!roleResult.Succeeded)
                 {
+                    _logger.LogError("Failed to add user to role: {Errors}",
+                        string.Join("; ", roleResult.Errors.Select(e => e.Description)));
                     await transaction.RollbackAsync(cancellationToken);
                     var roleErrorDescriptions = string.Join("; ", roleResult.Errors.Select(e => e.Description));
                     return OperationResult<ResponseWithTokensDto>.Failure(new Error(
@@ -126,26 +141,31 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                         "An error occurred while assigning the user role."
                     ));
                 }
-                _logger.LogInformation($"User {identity.UserName} added to the {defaultRole} role.");
+                _logger.LogInformation("User {Username} added to role {Role}", request.Username, defaultRole);
 
                 // Commit the transaction
                 await transaction.CommitAsync(cancellationToken);
-                _logger.LogInformation("Transaction committed successfully.");
+                _logger.LogInformation("Transaction committed successfully for user: {Username}", request.Username);
 
                 // Step 8: Generate the JWT tokens
+                _logger.LogInformation("Generating JWT tokens for user: {Username}", request.Username);
                 var roles = new List<string> { defaultRole }; // Add more roles if needed
-                var accessToken = _jwtService.GenerateAccessToken(identity, userProfile.Payload!, roles);
+                var accessToken = _jwtService.GenerateAccessToken(identity, userProfile.Data!, roles);
 
                 return OperationResult<ResponseWithTokensDto>.Success(new ResponseWithTokensDto
                 {
                     AccessToken = accessToken,
                     RefreshToken = null // Implement refresh token generation
                 });
-
-
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning($"The operation to create user '{request.Username}' was canceled.");
+                return _errorHandler.HandleCancelationToken<ResponseWithTokensDto>(ex);
             }
             catch (Exception ex)
             {
+                _logger.LogError("An error occurred while registering user: {Username}", request.Username, ex);
                 await transaction.RollbackAsync(cancellationToken);
                 return _errorHandler.HandleException<ResponseWithTokensDto>(ex);
             }

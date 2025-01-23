@@ -52,5 +52,13 @@ namespace RAWANi.WEBAPi.Services
         public string GetLoggMessage(string key) =>
             _loggMessages.TryGetValue(key, out var message) ? message : "Unknown success message";
 
+        public string GetLoggMessage(string key, params object[] args)
+        {
+            if (_loggMessages.TryGetValue(key, out var message))
+            {
+                return string.Format(message, args); // Format the message with provided arguments
+            }
+            return "Unknown log message"; // Fallback if the key is not found
+        }
     }
 }

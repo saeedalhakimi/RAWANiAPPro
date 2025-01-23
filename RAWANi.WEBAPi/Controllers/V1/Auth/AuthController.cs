@@ -26,6 +26,10 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
         }
 
         [HttpPost(ApiRoutes.AuthRouts.Registration, Name = "Register")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> Register(
             [FromForm] RegisterIdentityCommand command)
@@ -35,10 +39,14 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
             if(!result.IsSuccess) return HandleErrorResponse(result);
 
             _logger.LogInformation("User registered successfully.");
-            return Ok(result);
+            return CreatedAtRoute("Register", result);
         }
 
         [HttpPost(ApiRoutes.AuthRouts.Login, Name = "Login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> Login(
             [FromBody] LoginDto loginDto)
@@ -53,6 +61,46 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
             var result = await _mediator.Send(command);
             if (!result.IsSuccess) return HandleErrorResponse(result);
             _logger.LogInformation("User logged in successfully.");
+            return Ok(result);
+        }
+
+        [HttpPost(ApiRoutes.AuthRouts.RefreshToken, Name = "RefreshToken")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ValidateModel]
+        public async Task<IActionResult> RefreshToken(
+            [FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            _logger.LogInformation("Refreshing token.");
+            var command = new RefreshTokenCommand
+            {
+                RefreshToken = refreshTokenDto.RefreshToken
+            };
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            _logger.LogInformation("Token refreshed successfully.");
+            return Ok(result);
+        }
+
+        [HttpPost(ApiRoutes.AuthRouts.Logout, Name = "Logout")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ValidateModel]
+        public async Task<IActionResult> Logout(
+            [FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            _logger.LogInformation("Logging out user.");
+            var command = new LogoutCommand
+            {
+                RefreshToken = refreshTokenDto.RefreshToken
+            };
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            _logger.LogInformation("User logged out successfully.");
             return Ok(result);
         }
     }

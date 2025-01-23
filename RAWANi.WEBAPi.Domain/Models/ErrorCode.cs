@@ -18,5 +18,7 @@ namespace RAWANi.WEBAPi.Domain.Models
         ValidationError = 1005,
         Unauthorized = 1006,
         LockedOut = 1007,
+        BadRequest = 1008,
+        RequestCanceled = 1009,
     }
 }

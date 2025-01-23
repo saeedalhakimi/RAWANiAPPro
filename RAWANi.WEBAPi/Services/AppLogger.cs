@@ -33,5 +33,15 @@ namespace RAWANi.WEBAPi.Services
             else
                 _logger.Error(ex, message);
         }
+
+        public void LogWarning(string message, params object[] args)
+        {
+            _logger.Warning(message, args);
+        }
+
+        public void LogError(string message, params object[] args)
+        {
+            _logger.Error(message, args);
+        }
     }
 }

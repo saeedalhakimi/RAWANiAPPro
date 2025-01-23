@@ -29,6 +29,7 @@ namespace RAWANi.WEBAPi.Controllers.V1
             { ErrorCode.ValidationError, (422, "Unprocessable Entity")}, // Indicates that the request could not be completed due to validation errors
             { ErrorCode.Unauthorized, (401, "Unauthorized access")}, // Indicates that the request could not be completed due to a lack of authorization
             { ErrorCode.LockedOut, (423, "Locked Out")}, // Indicates that the request could not be completed due to a lack of authorization
+            { ErrorCode.BadRequest, (400, "Bad Request")}, // Indicates that the request could not be completed due to a lack of authorization
         };
 
         protected IActionResult HandleErrorResponse<T>
