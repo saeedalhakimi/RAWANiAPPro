@@ -8,7 +8,8 @@ namespace RAWANi.WEBAPi.Application.Contracts.AuthDtos.Responses
 {
     public record ResponseWithTokensDto
     {
-        public string AccessToken { get; init; }
-        public string RefreshToken { get; init; }
+        public string AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
+        public string? Message { get; set; }
     }
 }

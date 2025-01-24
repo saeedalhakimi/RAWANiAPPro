@@ -32,10 +32,11 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> Register(
-            [FromForm] RegisterIdentityCommand command)
+            [FromForm] RegisterIdentityCommand command,
+            CancellationToken cancellationToken)
         {
             _logger.LogInformation("Registering new user.");
-            var result = await _mediator.Send(command);
+            var result = await _mediator.Send(command, cancellationToken);
             if(!result.IsSuccess) return HandleErrorResponse(result);
 
             _logger.LogInformation("User registered successfully.");
@@ -49,7 +50,8 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> Login(
-            [FromBody] LoginDto loginDto)
+            [FromBody] LoginDto loginDto,
+            CancellationToken cancellationToken)
         {
             _logger.LogInformation("Logging in user.");
 
@@ -58,7 +60,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
                 Username = loginDto.Username,
                 Password = loginDto.Password
             };
-            var result = await _mediator.Send(command);
+            var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess) return HandleErrorResponse(result);
             _logger.LogInformation("User logged in successfully.");
             return Ok(result);
@@ -71,14 +73,15 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> RefreshToken(
-            [FromBody] RefreshTokenDto refreshTokenDto)
+            [FromBody] RefreshTokenDto refreshTokenDto,
+            CancellationToken cancellationToken)
         {
             _logger.LogInformation("Refreshing token.");
             var command = new RefreshTokenCommand
             {
                 RefreshToken = refreshTokenDto.RefreshToken
             };
-            var result = await _mediator.Send(command);
+            var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess) return HandleErrorResponse(result);
             _logger.LogInformation("Token refreshed successfully.");
             return Ok(result);
@@ -91,16 +94,53 @@ namespace RAWANi.WEBAPi.Controllers.V1.Auth
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> Logout(
-            [FromBody] RefreshTokenDto refreshTokenDto)
+            [FromBody] RefreshTokenDto refreshTokenDto,
+            CancellationToken cancellationToken)
         {
             _logger.LogInformation("Logging out user.");
             var command = new LogoutCommand
             {
                 RefreshToken = refreshTokenDto.RefreshToken
             };
-            var result = await _mediator.Send(command);
+            var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess) return HandleErrorResponse(result);
             _logger.LogInformation("User logged out successfully.");
+            return Ok(result);
+        }
+
+        [HttpPost(ApiRoutes.AuthRouts.ForgotPassword, Name = "ForgotPassword")]
+        [ValidateModel]
+        public async Task<IActionResult> ForgotPassword(
+            [FromBody] ForgotPasswordCommand command, 
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPost(ApiRoutes.AuthRouts.ResetPassword, Name = "ResetPassword")]
+        [ValidateModel]
+        public async Task<IActionResult> ResetPassword(
+            [FromBody] ResetPasswordCommand command,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPost(ApiRoutes.AuthRouts.ConfirmEmail, Name = "ConfirmEmail")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ValidateModel]
+        public async Task<IActionResult> ConfirmEmail(
+            [FromBody] ConfirmEmailCommand command,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(command);
+            if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
     }

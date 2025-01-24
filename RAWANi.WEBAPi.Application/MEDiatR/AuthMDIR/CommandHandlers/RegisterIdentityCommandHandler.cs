@@ -27,6 +27,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly JwtService _jwtService;
         private readonly IFileService _fileService;
         private readonly ErrorHandler _errorHandler;
+        private readonly IEmailService _emailService;
         public RegisterIdentityCommandHandler(
             DataContext ctx,
             UserManager<IdentityUser> userManager,
@@ -35,7 +36,8 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             ILoggMessagingService messagingService,
             JwtService jwtService,
             IFileService fileService,
-            ErrorHandler errorHandler)
+            ErrorHandler errorHandler,
+            IEmailService emailService)
         {
             _ctx = ctx;
             _userManager = userManager;
@@ -45,6 +47,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             _jwtService = jwtService;
             _fileService = fileService;
             _errorHandler = errorHandler;
+            _emailService = emailService;
         }
         
         public async Task<OperationResult<ResponseWithTokensDto>> Handle(
@@ -95,7 +98,21 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                         , "An error occurred while creating the user account."));
                 }
 
-                //Step 3: Create the basic information
+                // Step 4: Generate an email confirmation token
+                _logger.LogInformation("Generating email confirmation token for user: {Username}", request.Username);
+                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(identity);
+
+                // Step 5: Send the confirmation email
+                _logger.LogInformation("Sending confirmation email to user: {Username}", request.Username);
+                var confirmationLink = $"https://yourapp.com/confirm-email?token={emailConfirmationToken}&email={request.Username}";
+                var emailBody = $"Click the link to confirm your email: {confirmationLink}";
+
+                //await _emailService.SendEmailAsync(request.Username, "Confirm Your Email", emailBody); use later for production
+                _logger.LogInformation("Confirmation email sent to user: {Username}", request.Username);
+
+                _logger.LogInformation($"EmailConToken : {confirmationLink}"); //for dev inv only
+
+                //Step 6: Create the basic information
                 _logger.LogInformation("Creating basic information for user: {Username}", request.Username);
                 var basicInformation = BasicInformation.Create(
                     request.FirstName, request.LastName, request.Username, 
@@ -108,7 +125,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                     return OperationResult<ResponseWithTokensDto>.Failure(basicInformation.Errors);
                 }
 
-                // Step 4: Create the user profile
+                // Step 7: Create the user profile
                 _logger.LogInformation("Creating user profile for user: {Username}", request.Username);
                 var userProfile = UserProfile.Create(identity.Id, basicInformation.Data!, imageLink);
                 if (!userProfile.IsSuccess)
@@ -119,7 +136,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 await _ctx.UserProfiles.AddAsync(userProfile.Data!, cancellationToken);
                 await _ctx.SaveChangesAsync(cancellationToken);
 
-                // Step 5: Add the user to the default role
+                // Step 8: Add the user to the default role
                 const string defaultRole = "User "; // Define the default role
                 _logger.LogInformation("Adding user to default role: {Role}", defaultRole);
                 if (!await _roleManager.RoleExistsAsync(defaultRole))
@@ -155,7 +172,8 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 return OperationResult<ResponseWithTokensDto>.Success(new ResponseWithTokensDto
                 {
                     AccessToken = accessToken,
-                    RefreshToken = null // Implement refresh token generation
+                    RefreshToken = null, // Implement refresh token generation
+                    Message = "Registration successful. Please check your email to confirm your account."
                 });
             }
             catch (OperationCanceledException ex)

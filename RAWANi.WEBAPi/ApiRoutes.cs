@@ -55,6 +55,7 @@
             public const string UserEmail = "by-email/{email}";
             public const string UserFirstAndLastNamesUpdate = "update-names/{userGuid}";
             public const string AssignRoleToUser = "{userId}/roles";
+            
 
         }
 
@@ -97,6 +98,9 @@
             public const string Roles = "roles";
             public const string UpdateRole = "roles/{roleId}";
             public const string DeleteRole = "roles/{roleId}";
+            public const string ForgotPassword = "forgot-password";
+            public const string ResetPassword = "reset-password";
+            public const string ConfirmEmail = "confirm-email";
         }
 
         public static class Protected

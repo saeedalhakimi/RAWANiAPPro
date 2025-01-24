@@ -119,7 +119,9 @@ try
         .AddRoles<IdentityRole>() // Add support for roles
         .AddEntityFrameworkStores<DataContext>() // Use the DataContext for Identity storage
         .AddRoleManager<RoleManager<IdentityRole>>() // Register RoleManager
-        .AddUserManager<UserManager<IdentityUser>>(); // Register UserManager
+        .AddUserManager<UserManager<IdentityUser>>() // Register UserManager
+        .AddDefaultTokenProviders(); 
+
 
     // Versioning
     builder.Services.AddApiVersioning(options =>
@@ -176,6 +178,14 @@ try
         options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
         options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
     });
+
+    // Register the email service
+    builder.Services.AddSingleton<IEmailService>(new EmailService(
+        smtpServer: builder.Configuration["EmailSettings:SmtpServer"],
+        smtpPort: int.Parse(builder.Configuration["EmailSettings:SmtpPort"]),
+        smtpUsername: builder.Configuration["EmailSettings:SmtpUsername"],
+        smtpPassword: builder.Configuration["EmailSettings:SmtpPassword"]
+    ));
 
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();

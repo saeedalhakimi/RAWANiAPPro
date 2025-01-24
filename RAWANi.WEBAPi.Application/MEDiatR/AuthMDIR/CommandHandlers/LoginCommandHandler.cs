@@ -65,7 +65,16 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                         ErrorCode.NotFound, "User Not Found", "The provided email address does not match any account."));
                 }
 
-                // Step 2: Check if the user account is locked
+                // Step 2: Check if the user account is disabled
+                _logger.LogInformation("Checking if user email is confirmed for user: {UserId}", user.Id);
+                if (!await _userManager.IsEmailConfirmedAsync(user))
+                {
+                    _logger.LogWarning("User account is disabled for user: {UserId}", user.Id);
+                    return OperationResult<ResponseWithTokensDto>.Failure(new Error(
+                        ErrorCode.Unauthorized, "Account Disabled", "The account is disabled. Please confirm your email address."));
+                }
+
+                // Step 3: Check if the user account is locked
                 _logger.LogInformation("Checking if user account is locked for user: {UserId}", user.Id);
                 if (await _userManager.IsLockedOutAsync(user))
                 {
@@ -74,15 +83,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                         ErrorCode.LockedOut, "Account Locked", "The account is locked. Please contact the administrator."));
                 }
 
-                // Step 3: Check if the user account is disabled
-                _logger.LogInformation("Checking if user account is disabled for user: {UserId}", user.Id);
-                if (!await _userManager.IsEmailConfirmedAsync(user))
-                {
-                    _logger.LogWarning("User account is disabled for user: {UserId}", user.Id);
-                    return OperationResult<ResponseWithTokensDto>.Failure(new Error(
-                        ErrorCode.Unauthorized, "Account Disabled", "The account is disabled. Please contact the administrator."));
-                }
-
+                
                 // Step 4: Check if the password is correct
                 _logger.LogInformation("Validating password for user: {UserId}", user.Id);
                 if (!await _userManager.CheckPasswordAsync(user, request.Password))
