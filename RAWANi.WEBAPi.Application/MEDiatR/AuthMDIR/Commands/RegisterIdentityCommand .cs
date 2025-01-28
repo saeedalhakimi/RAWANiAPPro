@@ -30,6 +30,15 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands
         [StringLength(100, MinimumLength = 1, ErrorMessage = "Last name must be between 1 and 50 characters.")]
         public string LastName { get; set; }
 
+        [StringLength(20, ErrorMessage = "Phone max of 20 characters.")]
+        public string PhoneNumber { get; set; }
+
+        [StringLength(100, ErrorMessage = "Address max of 100 characters.")]
+        public string Address { get; set; }
+
+        [StringLength(50, ErrorMessage = "City name max of 50 characters.")]
+        public string CurrentCity { get; set; }
+
         [Required]
         [AgeRange(18, 125)] // Validate age is between 18 and 125 years
         public DateTime DateOfBirth { get; set; }

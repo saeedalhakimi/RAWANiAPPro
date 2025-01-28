@@ -18,20 +18,37 @@
             public const string GetById = "{countryId:int}";
         }
 
+        public static class AdminRoutes
+        {
+            //Roles
+            public const string RolesRoute = "roles";
+            public const string AssignRole = "roles/assign";
+            public const string RemoveRole = "roles/remove";
+
+            //User
+            public const string UserRouts = "users";
+            public const string UserIdRoute = "users/{userId}";
+            public const string UsernameRoute = "users/username";
+        }
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// Routes related to persons.
         /// </summary>
-        public static class Persons
+        public static class UserProfileRoutes
         {
-            /// <summary>
-            /// Route template for accessing a specific person by GUID.
-            /// </summary>
-            public const string GetByGuid = "{guid}";
-
-            /// <summary>
-            /// Route template for accessing a specific person by person number.
-            /// </summary>
-            public const string GetByPersonNumber = "personnumber/{personNumber}";
+            public const string UserProfileIdRoute = "user-profile-id/{userProfileId}";
+            public const string UserIdRoute = "user-id/{userId}";
+            public const string CurrentUserProfile = "current-user-profile";
+           
         }
 
         public static class Roles

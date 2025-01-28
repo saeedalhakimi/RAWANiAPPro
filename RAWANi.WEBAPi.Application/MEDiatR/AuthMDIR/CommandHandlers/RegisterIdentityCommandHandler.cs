@@ -85,6 +85,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 {
                     UserName = request.Username,
                     Email = request.Username,
+                    PhoneNumber = request.PhoneNumber,
                 };
                 var identityResult = await _userManager.CreateAsync(identity, request.Password);
                 if (!identityResult.Succeeded)
@@ -116,7 +117,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 _logger.LogInformation("Creating basic information for user: {Username}", request.Username);
                 var basicInformation = BasicInformation.Create(
                     request.FirstName, request.LastName, request.Username, 
-                    request.DateOfBirth,request.Gender);
+                    request.PhoneNumber,request.Address, request.CurrentCity ,request.DateOfBirth,request.Gender);
                 if (!basicInformation.IsSuccess)
                 {
                     _logger.LogError("Failed to create basic information: {Errors}",

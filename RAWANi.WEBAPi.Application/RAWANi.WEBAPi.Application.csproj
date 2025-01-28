@@ -23,4 +23,8 @@
     <ProjectReference Include="..\RAWANi.WEBAPi.Domain\RAWANi.WEBAPi.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="MEDiatR\UserProfileMDIR\CommandHandlers\" />
+  </ItemGroup>
+
 </Project>

@@ -9,6 +9,7 @@ using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers;
 using RAWANi.WEBAPi.Application.Models;
 using RAWANi.WEBAPi.Application.Services;
 using RAWANi.WEBAPi.Filters;
+using RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory;
 using RAWANi.WEBAPi.Infrastructure.Services;
 using RAWANi.WEBAPi.Middlewares;
 using RAWANi.WEBAPi.Services;
@@ -40,6 +41,8 @@ try
     // Use Serilog for logging
     builder.Host.UseSerilog();
 
+    //Factories
+    builder.Services.AddScoped<IDatabaseConnectionFactory, SqlDatabaseConnectionFactory>();
 
     // Register the FileService
     builder.Services.AddScoped<IFileService>(provider =>
