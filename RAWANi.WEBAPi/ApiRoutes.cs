@@ -84,7 +84,7 @@
             /// <summary>
             /// Route template for accessing a specific post by ID.
             /// </summary>
-            public const string GetById = "{id}";
+            public const string PostIdRoute = "{postId}";
 
             /// <summary>
             /// Route template for accessing comments for a specific post.

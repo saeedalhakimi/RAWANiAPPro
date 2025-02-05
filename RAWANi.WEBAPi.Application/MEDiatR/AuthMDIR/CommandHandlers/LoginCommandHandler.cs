@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Contracts.AuthDtos.Responses;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands;
@@ -24,8 +25,8 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAppLogger<LoginCommandHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly JwtService _jwtService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IJwtService _jwtService;
+        private readonly IErrorHandler _errorHandler;
 
         public LoginCommandHandler(
             DataContext ctx,
@@ -33,8 +34,8 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             RoleManager<IdentityRole> roleManager,
             IAppLogger<LoginCommandHandler> appLogger,
             ILoggMessagingService messagingService,
-            JwtService jwtService,
-            ErrorHandler errorHandler)
+            IJwtService jwtService,
+            IErrorHandler errorHandler)
         {
             _ctx = ctx;
             _userManager = userManager;

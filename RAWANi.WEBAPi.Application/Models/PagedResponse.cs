@@ -14,12 +14,15 @@ namespace RAWANi.WEBAPi.Application.Models
         public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
         public List<T> Data { get; set; }
 
-        public PagedResponse(List<T> data, int pageNumber, int pageSize, int totalCount)
+        public int? CurrentPageSize { get; set; }
+
+        public PagedResponse(List<T> data, int pageNumber, int pageSize, int totalCount, int? currentPageSize = 0)
         {
             PageNumber = pageNumber;
             PageSize = pageSize;
             TotalCount = totalCount;
             Data = data;
+            CurrentPageSize = currentPageSize;
         }
     }
 }

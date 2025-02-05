@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands;
 using RAWANi.WEBAPi.Application.Models;
 using RAWANi.WEBAPi.Application.Services;
@@ -18,13 +19,13 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IAppLogger<ConfirmEmailCommandHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
 
         public ConfirmEmailCommandHandler(
             UserManager<IdentityUser> userManager,
             IAppLogger<ConfirmEmailCommandHandler> logger,
             ILoggMessagingService messagingService,
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _userManager = userManager;
             _logger = logger;

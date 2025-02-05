@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Contracts.AuthDtos.Responses;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands;
@@ -19,12 +20,12 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly DataContext _ctx;
         private readonly IAppLogger<LoginCommandHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
         public LogoutCommandHandler(
             DataContext ctx,
             IAppLogger<LoginCommandHandler> appLogger,
             ILoggMessagingService messagingService,
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _ctx = ctx;
             _logger = appLogger;

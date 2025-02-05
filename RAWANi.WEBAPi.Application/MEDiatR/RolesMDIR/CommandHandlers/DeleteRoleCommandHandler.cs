@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
 using RAWANi.WEBAPi.Application.MEDiatR.RolesMDIR.Commands;
 using RAWANi.WEBAPi.Application.Models;
@@ -20,13 +21,13 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.RolesMDIR.CommandHandlers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAppLogger<DeleteRoleCommandHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
         public DeleteRoleCommandHandler(
             DataContext ctx,
             RoleManager<IdentityRole> roleManager,
             IAppLogger<DeleteRoleCommandHandler> logger,
             ILoggMessagingService MessagingService,
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _ctx = ctx;
             _roleManager = roleManager;

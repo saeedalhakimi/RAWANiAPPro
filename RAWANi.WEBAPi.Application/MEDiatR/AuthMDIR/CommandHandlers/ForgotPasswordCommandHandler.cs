@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands;
 using RAWANi.WEBAPi.Application.Models;
 using RAWANi.WEBAPi.Application.Services;
@@ -18,13 +19,13 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IEmailService _emailService;
         private readonly IAppLogger<ForgotPasswordCommandHandler> _logger;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
 
         public ForgotPasswordCommandHandler(
             UserManager<IdentityUser> userManager,
             IEmailService emailService,
             IAppLogger<ForgotPasswordCommandHandler> logger,
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _userManager = userManager;
             _emailService = emailService;

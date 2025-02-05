@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.MEDiatR.RolesMDIR.Queries;
 using RAWANi.WEBAPi.Application.Models;
 using RAWANi.WEBAPi.Application.Services;
@@ -18,13 +19,13 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.RolesMDIR.QueryHandlers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAppLogger<GetAllRolesQueryHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
 
         public GetAllRolesQueryHandler(
             RoleManager<IdentityRole> roleManager,
             IAppLogger<GetAllRolesQueryHandler> logger,
             ILoggMessagingService messagingService,
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _roleManager = roleManager;
             _logger = logger;

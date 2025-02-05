@@ -1,4 +1,5 @@
-﻿using RAWANi.WEBAPi.Application.Services;
+﻿using RAWANi.WEBAPi.Application.Abstractions;
+using RAWANi.WEBAPi.Application.Services;
 using RAWANi.WEBAPi.Domain.Models;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace RAWANi.WEBAPi.Application.Models
 {
-    public class ErrorHandler
+    public class ErrorHandler : IErrorHandler
     {
         private readonly IAppLogger<ErrorHandler> _logger;
         private readonly ILoggMessagingService _messagingService;

@@ -61,6 +61,11 @@ namespace RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory
             return _reader.GetInt64(ordinal);
         }
 
+        public bool IsDBNull(int ordinal)
+        {
+            return _reader.IsDBNull(ordinal);
+        }
+
         public bool GetBoolean(int ordinal) // New method implementation
         {
             return _reader.GetBoolean(ordinal);

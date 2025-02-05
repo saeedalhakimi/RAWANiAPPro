@@ -345,10 +345,6 @@ namespace RAWANi.WEBAPi.Application.Migrations
                             b1.Property<DateTime>("DateOfBirth")
                                 .HasColumnType("datetime2");
 
-                            b1.Property<string>("Email")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
                             b1.Property<string>("FirstName")
                                 .IsRequired()
                                 .HasColumnType("nvarchar(max)");
@@ -358,10 +354,6 @@ namespace RAWANi.WEBAPi.Application.Migrations
                                 .HasColumnType("nvarchar(max)");
 
                             b1.Property<string>("LastName")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("Phone")
                                 .IsRequired()
                                 .HasColumnType("nvarchar(max)");
 

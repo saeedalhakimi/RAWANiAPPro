@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Contracts.AuthDtos.Responses;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.Commands;
@@ -24,9 +25,9 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAppLogger<RegisterIdentityCommandHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;
         private readonly IFileService _fileService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
         private readonly IEmailService _emailService;
         public RegisterIdentityCommandHandler(
             DataContext ctx,
@@ -34,9 +35,9 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
             RoleManager<IdentityRole> roleManager,
             IAppLogger<RegisterIdentityCommandHandler> appLogger,
             ILoggMessagingService messagingService,
-            JwtService jwtService,
+            IJwtService jwtService,
             IFileService fileService,
-            ErrorHandler errorHandler,
+            IErrorHandler errorHandler,
             IEmailService emailService)
         {
             _ctx = ctx;
@@ -116,8 +117,9 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers
                 //Step 6: Create the basic information
                 _logger.LogInformation("Creating basic information for user: {Username}", request.Username);
                 var basicInformation = BasicInformation.Create(
-                    request.FirstName, request.LastName, request.Username, 
-                    request.PhoneNumber,request.Address, request.CurrentCity ,request.DateOfBirth,request.Gender);
+                    request.FirstName, request.LastName, 
+                    request.Address, request.CurrentCity 
+                    ,request.DateOfBirth,request.Gender);
                 if (!basicInformation.IsSuccess)
                 {
                     _logger.LogError("Failed to create basic information: {Errors}",

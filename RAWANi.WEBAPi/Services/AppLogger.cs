@@ -43,5 +43,10 @@ namespace RAWANi.WEBAPi.Services
         {
             _logger.Error(message, args);
         }
+
+        public void LogDebug(string message, params object[] args)
+        {
+            _logger?.Debug(message, args);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Contracts.UserProfileDtos.Responses;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
 using RAWANi.WEBAPi.Application.MEDiatR.UserProfileMDIR.Queries;
@@ -21,13 +22,13 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.UserProfileMDIR.QueryHandlers
         private readonly DataContext _ctx;
         private readonly IAppLogger<GetUserProfileByUserIDQueryHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
 
         public GetUserProfileByUserIDQueryHandler(
             DataContext ctx,
             IAppLogger<GetUserProfileByUserIDQueryHandler> logger,
             ILoggMessagingService messagingService,
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _ctx = ctx;
             _logger = logger;
@@ -65,7 +66,6 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.UserProfileMDIR.QueryHandlers
                     IdentityID = up.IdentityID,
                     FirstName = up.BasicInfo.FirstName,
                     LastName = up.BasicInfo.LastName,
-                    Email = up.BasicInfo.Email,
                     DateOfBirth = up.BasicInfo.DateOfBirth,
                     Gender = up.BasicInfo.Gender,
                     ImageLink = up.ImageLink,

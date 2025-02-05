@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Contracts.UsersDto;
 using RAWANi.WEBAPi.Application.Contracts.UsersDto.Responses;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
@@ -24,7 +25,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.UserMDIR.QueryHandlers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAppLogger<GetUserDetailsQueryHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
-        private readonly ErrorHandler _errorHandler;
+        private readonly IErrorHandler _errorHandler;
 
         public GetUserDetailsQueryHandler(
             DataContext ctx, 
@@ -32,7 +33,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.UserMDIR.QueryHandlers
             RoleManager<IdentityRole> roleManager, 
             IAppLogger<GetUserDetailsQueryHandler> logger, 
             ILoggMessagingService messagingService, 
-            ErrorHandler errorHandler)
+            IErrorHandler errorHandler)
         {
             _ctx = ctx;
             _userManager = userManager;

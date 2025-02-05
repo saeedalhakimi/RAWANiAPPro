@@ -17,5 +17,6 @@ namespace RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory
         int GetInt32(int ordinal);
         long GetInt64(int ordinal); // New method to handle long values
         bool GetBoolean(int ordinal); // New method to handle boolean values
+        bool IsDBNull(int ordinal);
     }
 }

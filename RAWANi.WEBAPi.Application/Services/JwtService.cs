@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace RAWANi.WEBAPi.Application.Services
 {
-    public class JwtService
+    public class JwtService : IJwtService
     {
         private readonly JwtSettings _jwtSettings;
 

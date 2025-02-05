@@ -13,5 +13,6 @@ namespace RAWANi.WEBAPi.Application.Services
         void LogWarning(string message, Exception ex = null);
         void LogError(string message, params object[] args);
         void LogError(string message, Exception ex = null);
+        void LogDebug(string message, params object[] args); // New Debug Logging
     }
 }

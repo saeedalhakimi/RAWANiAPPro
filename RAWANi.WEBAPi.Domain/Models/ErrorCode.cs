@@ -20,5 +20,8 @@ namespace RAWANi.WEBAPi.Domain.Models
         LockedOut = 1007,
         BadRequest = 1008,
         RequestCanceled = 1009,
+        CREATIONFAILED = 1010,
+        RESOURCECREATIONFAILED = 1011,
+        RESOURCENOTFOUND = 1012,
     }
 }

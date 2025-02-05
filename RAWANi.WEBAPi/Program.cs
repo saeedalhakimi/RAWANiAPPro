@@ -4,12 +4,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using RAWANi.WEBAPi.Application.Abstractions;
 using RAWANi.WEBAPi.Application.Data.DbContexts;
 using RAWANi.WEBAPi.Application.MEDiatR.AuthMDIR.CommandHandlers;
 using RAWANi.WEBAPi.Application.Models;
+using RAWANi.WEBAPi.Application.Repository;
 using RAWANi.WEBAPi.Application.Services;
 using RAWANi.WEBAPi.Filters;
 using RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory;
+using RAWANi.WEBAPi.Infrastructure.Repository.Posts;
 using RAWANi.WEBAPi.Infrastructure.Services;
 using RAWANi.WEBAPi.Middlewares;
 using RAWANi.WEBAPi.Services;
@@ -34,7 +37,7 @@ try
         .WriteTo.Debug() // Debug sink for development convenience
         .CreateLogger();
 
-    Log.Information("Starting the web application setup");
+    Log.Information("Starting the web application setup at {Time}", DateTime.Now);
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -42,8 +45,10 @@ try
     builder.Host.UseSerilog();
 
     //Factories
+    Log.Information("Initializing database connection factory...");
     builder.Services.AddScoped<IDatabaseConnectionFactory, SqlDatabaseConnectionFactory>();
 
+    Log.Information("Initializing file service...");
     // Register the FileService
     builder.Services.AddScoped<IFileService>(provider =>
     {
@@ -52,6 +57,8 @@ try
     });
 
     // Add rate limiting services
+    Log.Information("Setting up rate limiting policies...");
+
     builder.Services.AddRateLimiter(options =>
     {
         // Environment-specific rate limits
@@ -73,9 +80,9 @@ try
         // Customize the response when the rate limit is exceeded
         options.OnRejected = (context, _) =>
         {
-            // Use Serilog to log the rate limit event
-            Log.Warning("Rate limit exceeded for {PartitionKey}",
-                context.HttpContext.User.Identity?.Name ?? context.HttpContext.Request.Headers.Host.ToString());
+            // Log when rate limit is exceeded
+            Log.Warning("Rate limit exceeded for {PartitionKey} at {Time}. Returning 429 Too Many Requests.",
+                        context.HttpContext.User.Identity?.Name ?? context.HttpContext.Request.Headers.Host.ToString(), DateTime.Now);
 
             context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             context.HttpContext.Response.Headers.RetryAfter = "60"; // Retry after 60 seconds
@@ -85,13 +92,14 @@ try
     });
 
     // Add health checks services
+    Log.Information("Setting up health check services...");
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<DataContext>(); // Check database connectivity
-        /*.AddCheck<UserRepositoryHealthCheck>("user_repository_health_check");*/ // Add custom health check
+    /*.AddCheck<UserRepositoryHealthCheck>("user_repository_health_check");*/ // Add custom health check
 
     //servces for the DI container
 
-    Log.Information("Adding services to the DI container");
+    Log.Information("Registering services into DI container...");
     builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ApiExceptionHandler>();
@@ -99,17 +107,25 @@ try
 
     builder.Services.AddScoped<ILoggMessagingService, LoggMessagingService>();
     builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
-    builder.Services.AddScoped<ErrorHandler>();
+    builder.Services.AddScoped<IErrorHandler, ErrorHandler>();
+
+    //Repositories
+    Log.Information("Registering Repositories...");
+    builder.Services.AddScoped<IPostRepository, PostRepository>();
 
     // Register MediatR
+
+    Log.Information("Setting up MediatR services for CQRS...");
     builder.Services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(RegisterIdentityCommandHandler).Assembly));
 
     // DataContext
+    Log.Information("Configuring database context...");
     builder.Services.AddDbContext<DataContext>(options =>
                    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
     // Register Identity with RoleManager
+    Log.Information("Configuring Identity with RoleManager...");
     builder.Services.AddIdentityCore<IdentityUser>(options =>
     {
         // Configure Identity options if needed
@@ -123,10 +139,11 @@ try
         .AddEntityFrameworkStores<DataContext>() // Use the DataContext for Identity storage
         .AddRoleManager<RoleManager<IdentityRole>>() // Register RoleManager
         .AddUserManager<UserManager<IdentityUser>>() // Register UserManager
-        .AddDefaultTokenProviders(); 
+        .AddDefaultTokenProviders();
 
 
     // Versioning
+    Log.Information("Initializing API versioning...");
     builder.Services.AddApiVersioning(options =>
     {
         options.DefaultApiVersion = new ApiVersion(1);
@@ -141,6 +158,7 @@ try
                });
 
     // Jwt Authentication
+    Log.Information("Initializing JWT authentication...");
     var jwtSettings = new JwtSettings();
     builder.Configuration.Bind(nameof(JwtSettings), jwtSettings);
 
@@ -149,10 +167,11 @@ try
 
     if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
     {
+        Log.Fatal("JwtSettings configuration is missing or invalid.");
         throw new InvalidOperationException("JwtSettings configuration is missing or invalid.");
     }
 
-    builder.Services.AddSingleton<JwtService>();
+    builder.Services.AddSingleton<IJwtService, JwtService>();
 
     builder.Services.AddAuthentication(options =>
     {
@@ -175,6 +194,7 @@ try
             };
         });
 
+    Log.Information("Configuring authorization policies...");
     builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -183,6 +203,7 @@ try
     });
 
     // Register the email service
+    Log.Information("Registering email service...");
     builder.Services.AddSingleton<IEmailService>(new EmailService(
         smtpServer: builder.Configuration["EmailSettings:SmtpServer"],
         smtpPort: int.Parse(builder.Configuration["EmailSettings:SmtpPort"]),
