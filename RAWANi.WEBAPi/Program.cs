@@ -11,6 +11,7 @@ using RAWANi.WEBAPi.Application.Models;
 using RAWANi.WEBAPi.Application.Repository;
 using RAWANi.WEBAPi.Application.Services;
 using RAWANi.WEBAPi.Filters;
+using RAWANi.WEBAPi.Health;
 using RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory;
 using RAWANi.WEBAPi.Infrastructure.Repository.Posts;
 using RAWANi.WEBAPi.Infrastructure.Services;
@@ -94,8 +95,8 @@ try
     // Add health checks services
     Log.Information("Setting up health check services...");
     builder.Services.AddHealthChecks()
-        .AddDbContextCheck<DataContext>(); // Check database connectivity
-    /*.AddCheck<UserRepositoryHealthCheck>("user_repository_health_check");*/ // Add custom health check
+        .AddDbContextCheck<DataContext>() // Check database connectivity
+        .AddCheck<PostRepsitoryHealthCheck>("post_repository_health_check"); // Add custom health check
 
     //servces for the DI container
 

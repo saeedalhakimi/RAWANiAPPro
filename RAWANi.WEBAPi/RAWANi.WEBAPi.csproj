@@ -33,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Health\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

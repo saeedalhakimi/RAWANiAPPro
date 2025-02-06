@@ -33,8 +33,8 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
 
         [HttpGet(Name = " GetPostsWithPagination")]
         public async Task<IActionResult> GetPostsWithPagination(
-            [FromQuery] int pageNumber,
-            [FromQuery] int pageSize,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
             [FromQuery] string sortColumn = "CreatedAt",
             [FromQuery] string sortDirection = "ASC",
             CancellationToken cancellationToken = default)
@@ -151,6 +151,38 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             // Step 4: Return the response
             _logger.LogInformation("Returning the created post response.");
             return CreatedAtRoute("CreatePost", result);
+        }
+
+        [HttpPut(ApiRoutes.Posts.PostIdRoute, Name = "UpdatePost")]
+        [ValidateModel]
+        [ValidateGuid("postId")]
+        public async Task<IActionResult> UpdatePost(
+            [FromRoute] string postId,
+            [FromForm] UpdatePostContentsDto updatePostDto,
+            CancellationToken cancellationToken)
+        {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+            if (userProfileId == null)
+            {
+                _logger.LogWarning("Invalid or missing UserProfileID claim.");
+                return BadRequest(new Error(
+                    ErrorCode.BadRequest,
+                    "Invalid Claim",
+                    "The UserProfileID claim is missing or invalid."
+                ));
+            }
+
+            var command = new UpdatePostContentsCommand
+            {
+                PostID = Guid.Parse(postId),
+                UserProfileID = userProfileId.Value,
+                PostTitle = updatePostDto.PostTitle,
+                PostContent = updatePostDto.PostContent,
+            };
+
+            var result = await _mediator.Send(command, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
         }
 
         [HttpDelete(ApiRoutes.Posts.PostIdRoute ,Name = "DeletePost")]

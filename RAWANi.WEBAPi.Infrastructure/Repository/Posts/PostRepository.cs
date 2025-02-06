@@ -407,9 +407,80 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
             }
         }
 
-        public Task<OperationResult<bool>> UpdatePostAsync(Post post, CancellationToken cancellationToken)
+        public async Task<bool> PostsHealthCheckAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT TOP 1 PostID FROM Posts";
+                command.CommandType = CommandType.Text;
+                await connection.OpenAsync(cancellationToken);
+                var result = await command.ExecuteScalarAsync(cancellationToken);
+                return result != null;
+            }
+            catch 
+            {
+                return false;
+            }
+        }
+
+        public Task<OperationResult<bool>> UpdatePostImageAsync(Post post, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<OperationResult<bool>> UpdatePostContentsAsync(
+            Post post, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_UpdatePostContents";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@PostID", post.PostID.Value);
+                command.AddParameter("@PostTitle", post.PostTitle.Value);
+                command.AddParameter("@PostContent", post.PostContent.Value);
+                command.AddParameter("@UpdatedAt", post.UpdatedAt);
+                command.AddOutputParameter("@RowsAffected", SqlDbType.Int);
+
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+
+                int rowsAffected = Convert.ToInt32(command.GetParameterValue("@RowsAffected"));
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation($"Post update successful - Rows affected: {rowsAffected}");
+                    return OperationResult<bool>.Success(true);
+                }
+                else
+                {
+                    _logger.LogWarning("Post Update failed. No rows affected. PostID: {PostID}", post.PostID.Value);
+                    return OperationResult<bool>.Failure(new Error(
+                        ErrorCode.RESOURCECREATIONFAILED,
+                        "Update Failed",
+                        $"Failed to update post - Rows affected: {rowsAffected}"
+                    ));
+                }
+
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("Post update operation was canceled. PostID: {PostID}, Exception: {Exception}",
+                    post.PostID.Value, ex.Message);
+                return _errorHandler.HandleCancelationToken<bool>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while updating post '{post.PostID.Value}", ex);
+                return _errorHandler.HandleException<bool>(ex);
+            }
         }
     }
 }

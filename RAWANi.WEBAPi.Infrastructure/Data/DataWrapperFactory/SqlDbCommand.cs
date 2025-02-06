@@ -34,6 +34,20 @@ namespace RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory
             _command.Parameters.AddWithValue(name, value);
         }
 
+        public void AddOutputParameter(string name, SqlDbType type)
+        {
+            var param = new SqlParameter(name, type)
+            {
+                Direction = ParameterDirection.Output
+            };
+            _command.Parameters.Add(param);
+        }
+
+        public object GetParameterValue(string name)
+        {
+            return _command.Parameters[name].Value;
+        }
+
         public async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             return await _command.ExecuteNonQueryAsync(cancellationToken);
@@ -54,5 +68,7 @@ namespace RAWANi.WEBAPi.Infrastructure.Data.DataWrapperFactory
         {
             _command.Dispose();
         }
+
+        
     }
 }

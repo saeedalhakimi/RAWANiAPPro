@@ -163,5 +163,34 @@ namespace RAWANi.WEBAPi.Domain.Entities.Posts
 
             return OperationResult<Post>.Success(this);
         }
+
+        public OperationResult<Post> UpdatePostContents(
+            string postTitle, string postContent)
+        {
+            // Validate postTitle
+            var postTitleResult = Header.Create(postTitle);
+            if (!postTitleResult.IsSuccess)
+                return OperationResult<Post>.Failure(postTitleResult.Errors);
+
+            // Validate postContent
+            var postContentResult = Bodies.Create(postContent);
+            if (!postContentResult.IsSuccess)
+                return OperationResult<Post>.Failure(postContentResult.Errors);
+
+            // Update the post
+            PostTitle = postTitleResult.Data;
+            PostContent = postContentResult.Data;
+            UpdatedAt = DateTime.UtcNow;
+
+            return OperationResult<Post>.Success(this);
+        }
+
+        public void updatePostImage(string postImageLink)
+        { 
+            ImageLink = postImageLink;
+            UpdatedAt = DateTime.UtcNow;
+        }
+            
+
     }
 }
