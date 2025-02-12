@@ -6,13 +6,32 @@ using System.Threading.Tasks;
 
 namespace RAWANi.WEBAPi.Domain.Models
 {
+    /// <summary>
+    /// Represents an error that occurred during an operation.
+    /// </summary>
     public class Error
     {
-        public ErrorCode Code { get; private set; }
-        public string Message { get; private set; }
-        public string? Details { get; private set; }  // Optional additional context for the error
+        /// <summary>
+        /// Gets the error code.
+        /// </summary>
+        public ErrorCode Code { get; }
 
-        // Constructor with code, message, and optional details
+        /// <summary>
+        /// Gets the error message.
+        /// </summary>
+        public string Message { get; }
+
+        /// <summary>
+        /// Gets additional details about the error.
+        /// </summary>
+        public string? Details { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Error"/> class.
+        /// </summary>
+        /// <param name="code">The error code.</param>
+        /// <param name="message">The error message.</param>
+        /// <param name="details">Additional details about the error.</param>
         public Error(ErrorCode code, string message, string? details = null)
         {
             Code = code;
@@ -20,37 +39,35 @@ namespace RAWANi.WEBAPi.Domain.Models
             Details = details;
         }
 
-        // Override ToString for better logging/debugging
-        public override string ToString()
-        {
-            return $"Error {Code}: {Message}" + (string.IsNullOrEmpty(Details) ? string.Empty :
-                $" - Details: {Details}");
-        }
+        /// <summary>
+        /// Returns a string representation of the error.
+        /// </summary>
+        /// <returns>A string describing the error.</returns>
+        public override string ToString() =>
+            string.IsNullOrEmpty(Details)
+                ? $"Error {Code}: {Message}"
+                : $"Error {Code}: {Message} - Details: {Details}";
 
         /// <summary>
         /// Converts the error to a formatted string suitable for logging.
         /// </summary>
-        /// <param name="includeDetails">Include the details in the output if true.</param>
+        /// <param name="includeDetails">Whether to include details in the output.</param>
         /// <returns>A formatted string of the error.</returns>
-        public string ToLogString(bool includeDetails = true)
-        {
-            return includeDetails && !string.IsNullOrEmpty(Details)
+        public string ToLogString(bool includeDetails = true) =>
+            includeDetails && !string.IsNullOrEmpty(Details)
                 ? $"Code: {Code}, Message: {Message}, Details: {Details}"
                 : $"Code: {Code}, Message: {Message}";
-        }
 
         /// <summary>
-        /// Provides a dictionary representation of the error for logging or serialization.
+        /// Converts the error to a dictionary for logging or serialization.
         /// </summary>
         /// <returns>A dictionary containing the error details.</returns>
-        public Dictionary<string, object?> ToDictionary()
-        {
-            return new Dictionary<string, object?>
-        {
-            { "Code", Code },
-            { "Message", Message },
-            { "Details", Details }
-        };
-        }
+        public Dictionary<string, object?> ToDictionary() =>
+            new Dictionary<string, object?>
+            {
+                { "Code", Code },
+                { "Message", Message },
+                { "Details", Details }
+            };
     }
 }

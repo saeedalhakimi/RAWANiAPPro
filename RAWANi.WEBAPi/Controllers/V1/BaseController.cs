@@ -55,7 +55,7 @@ namespace RAWANi.WEBAPi.Controllers.V1
                 // Construct the error response object
                 var apiError = new ErrorResponse
                 {
-                    Timestamp = result.Timestamp ?? DateTime.UtcNow,
+                    Timestamp = result.Timestamp,
                     CorrelationId = HttpContext.TraceIdentifier,
                     Errors = errorMessages,
                     ErrorsDetails = errorDetails!,

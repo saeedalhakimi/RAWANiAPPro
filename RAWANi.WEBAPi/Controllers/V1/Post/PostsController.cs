@@ -185,6 +185,37 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             return Ok(result);
         }
 
+        [HttpPut(ApiRoutes.Posts.UpdatePostImage, Name ="UpdatePostImage")]
+        [ValidateGuid("postId")]
+
+        public async Task<IActionResult> UpdatePostImage(
+            [FromRoute] string postId,
+            [FromForm] UpdatePostImageDto updatePostImageDto,
+            CancellationToken cancellationToken)
+        {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+            if (userProfileId == null)
+            {
+                _logger.LogWarning("Invalid or missing UserProfileID claim.");
+                return BadRequest(new Error(
+                    ErrorCode.BadRequest,
+                    "Invalid Claim",
+                    "The UserProfileID claim is missing or invalid."
+                ));
+            }
+
+            var command = new UpdatePostImageCommand
+            {
+                PostID = Guid.Parse(postId),
+                UserProfileID = userProfileId.Value,
+                PostImage = updatePostImageDto.PostImage,
+            };
+
+            var result = await _mediator.Send(command, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
+
         [HttpDelete(ApiRoutes.Posts.PostIdRoute ,Name = "DeletePost")]
         [ValidateGuid("postId")]
         public async Task<IActionResult> DeletePost(
@@ -234,5 +265,57 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
 
         }
 
+        [HttpPost(ApiRoutes.Posts.PostCommentsRoute, Name = "CreatePostComment")]
+        [ValidateGuid("postId")]
+        public async Task<IActionResult> CreatePostComment(
+            [FromRoute] string postId,
+            [FromBody] CreatePostCommentDto createPostCommentDto,
+            CancellationToken cancellationToken
+            )
+        {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+            if (userProfileId == null)
+            {
+                _logger.LogWarning("Invalid or missing UserProfileID claim.");
+                return BadRequest(new Error(
+                    ErrorCode.BadRequest,
+                    "Invalid Claim",
+                    "The UserProfileID claim is missing or invalid."
+                ));
+            }
+
+            var command = new CreatePostCommentCommand
+            {
+                PostID = Guid.Parse(postId),
+                UserProfileID = userProfileId.Value,
+                CommentContent = createPostCommentDto.CommentContent,
+            };
+            var result = await _mediator.Send(command, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return CreatedAtRoute("CreatePostComment", result);
+        }
+
+        [HttpGet(ApiRoutes.Posts.PostCommentsRoute, Name = "GetPostComments")]
+        [ValidateGuid("postId")]
+        public async Task<IActionResult> GetPostComments(
+            [FromRoute] string postId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortColumn = "CreatedAt",
+            [FromQuery] string sortDirection = "ASC",
+            CancellationToken cancellationToken = default)
+        {
+            var query = new GetAllCommentsForAPostQuery
+            {
+                PostID = Guid.Parse(postId),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortColumn = sortColumn,
+                SortDirection = sortDirection
+            };
+            var result = await _mediator.Send(query, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
     }
 }

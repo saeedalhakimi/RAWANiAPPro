@@ -41,5 +41,27 @@ namespace RAWANi.WEBAPi.Infrastructure.Services
             var uniqueName = $"{Guid.NewGuid()}{extension}";
             return uniqueName;
         }
+
+        public async Task<bool> DeleteFileAsync(string filePath)
+        {
+            try
+            {
+                var fullPath = Path.Combine(_uploadsFolderPath, Path.GetFileName(filePath)); // Ensure correct path
+
+                if (File.Exists(fullPath))
+                {
+                    File.Delete(fullPath);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Log the error (optional)
+                Console.WriteLine($"Error deleting file: {ex.Message}");
+                return false;
+            }
+        }
+
     }
-    }
+}

@@ -85,16 +85,17 @@
             /// Route template for accessing a specific post by ID.
             /// </summary>
             public const string PostIdRoute = "{postId}";
+            public const string UpdatePostImage = "update-post-image/{postId}";
 
             /// <summary>
             /// Route template for accessing comments for a specific post.
             /// </summary>
-            public const string GetCommentsByPostId = "{postId}/comments";
+            public const string PostCommentsRoute = "{postId}/comments";
 
             /// <summary>
             /// Route template for accessing a specific comment by ID within a post.
             /// </summary>
-            public const string GetCommentById = "{postId}/comments/{commentId}";
+            public const string PostCommentsIdRoute = "{postId}/comments/{commentId}";
         }
 
         /// <summary>

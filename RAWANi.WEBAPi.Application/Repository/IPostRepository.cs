@@ -25,5 +25,15 @@ namespace RAWANi.WEBAPi.Application.Repository
             string sortDirection,
             CancellationToken cancellationToken);
         Task<OperationResult<bool>> UpdatePostContentsAsync(Post post, CancellationToken cancellationToken);
+        Task<OperationResult<bool>> IsPostExistsAsync(Guid postId, CancellationToken cancellationToken);
+        Task<OperationResult<bool>> CreatePostCommentAsync(PostComment postComment, CancellationToken cancellationToken);
+        Task<OperationResult<IEnumerable<PostComment>>> GetCommentsForPostAsync(
+            Guid postId,
+            int pageNumber,
+            int pageSize,
+            string sortColumn,
+            string sortDirection, 
+            CancellationToken cancellationToken);
+        Task<OperationResult<int>> GetPostCommentsCountAsync(Guid postId, CancellationToken cancellationToken);
     }
 }

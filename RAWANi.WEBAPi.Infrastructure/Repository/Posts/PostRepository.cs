@@ -94,7 +94,7 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
                     return OperationResult<bool>.Failure(new Error(
                         ErrorCode.RESOURCECREATIONFAILED,
                         "Creation Failed",
-                        $"Falied To Create Person -rows affected: {rowsAffected}"
+                        $"Falied To Create Post -rows affected: {rowsAffected}"
                         ));
                 }
             }
@@ -426,9 +426,54 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
             }
         }
 
-        public Task<OperationResult<bool>> UpdatePostImageAsync(Post post, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> UpdatePostImageAsync(
+            Post post, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_UpdatePostImageLink";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@PostID", post.PostID.Value);
+                command.AddParameter("@PostImage", post.ImageLink ?? (object)DBNull.Value);
+                command.AddParameter("@UpdatedAt", post.UpdatedAt);
+                command.AddOutputParameter("@RowsAffected", SqlDbType.Int);
+
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+
+                int rowsAffected = Convert.ToInt32(command.GetParameterValue("@RowsAffected"));
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation($"Post update successful - Rows affected: {rowsAffected}");
+                    return OperationResult<bool>.Success(true);
+                }
+                else
+                {
+                    _logger.LogWarning("Post Update failed. No rows affected. PostID: {PostID}", post.PostID.Value);
+                    return OperationResult<bool>.Failure(new Error(
+                        ErrorCode.RESOURCECREATIONFAILED,
+                        "Update Failed",
+                        $"Failed to update post - Rows affected: {rowsAffected}"
+                    ));
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("Post update operation was canceled. PostID: {PostID}, Exception: {Exception}",
+                    post.PostID.Value, ex.Message);
+                return _errorHandler.HandleCancelationToken<bool>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while updating post '{post.PostID.Value}", ex);
+                return _errorHandler.HandleException<bool>(ex);
+            }
         }
 
         public async Task<OperationResult<bool>> UpdatePostContentsAsync(
@@ -480,6 +525,208 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
             {
                 _logger.LogError($"An unexpected error occurred while updating post '{post.PostID.Value}", ex);
                 return _errorHandler.HandleException<bool>(ex);
+            }
+        }
+
+        public async Task<OperationResult<bool>> IsPostExistsAsync(
+            Guid postId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"SELECT COUNT(*) FROM Posts WHERE PostID = @PostID;";
+                command.CommandType = CommandType.Text;
+                command.AddParameter("@PostID", postId);
+
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation($"{_messagingService.GetSuccessMessage(
+                    nameof(SuccessMessage.DataConnectionSuccess))}");
+
+                var count = (int)await command.ExecuteScalarAsync(cancellationToken);
+
+                // Return the result
+                return OperationResult<bool>.Success(count > 0);
+            }
+            catch (OperationCanceledException ex)
+            {
+                return _errorHandler.HandleCancelationToken<bool>(ex);
+            }
+            catch (Exception ex)
+            {
+                return _errorHandler.HandleException<bool>(ex);
+            }
+        }
+
+        public async Task<OperationResult<bool>> CreatePostCommentAsync(
+            PostComment postComment, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_CreatePostComment";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@CommentID", postComment.CommentID.Value);
+                command.AddParameter("@PostID", postComment.PostID.Value);
+                command.AddParameter("@UserProfileID", postComment.UserProfileID.Value);
+                command.AddParameter("@CommentContent", postComment.CommentContent.Value);
+                command.AddParameter("@CreatedAt", postComment.CreatedAt);
+                command.AddParameter("@UpdatedAt", postComment.UpdatedAt);
+
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation($"{_messagingService.GetSuccessMessage(
+                    nameof(SuccessMessage.DataConnectionSuccess))}");
+
+                _logger.LogInformation("Executing stored procedure '{StoredProcedure}' for post creation.", command.CommandText);
+
+                int rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation($"PostComment {_messagingService.GetSuccessMessage(
+                        nameof(SuccessMessage.DBCreationSuccess))} -rows affected: {rowsAffected}");
+
+                    return OperationResult<bool>.Success(true);
+                }
+                else
+                {
+                    _logger.LogWarning("PostComment creation failed. No rows affected. PostID: {PostID}", postComment.CommentID.Value);
+                    return OperationResult<bool>.Failure(new Error(
+                        ErrorCode.RESOURCECREATIONFAILED,
+                        "Creation Failed",
+                        $"Falied To Create PostComment -rows affected: {rowsAffected}"
+                        ));
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("PostComment creation operation was canceled. PostID: {PostID}, Exception: {Exception}",
+                    postComment.PostID.Value, ex.Message);
+                return _errorHandler.HandleCancelationToken<bool>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while creating postComment '{postComment.CommentID.Value}", ex);
+                return _errorHandler.HandleException<bool>(ex);
+            }
+        }
+
+        public async Task<OperationResult<IEnumerable<PostComment>>> GetCommentsForPostAsync(
+            Guid postId, int pageNumber, int pageSize, string sortColumn, 
+            string sortDirection, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _logger.LogDebug("Cancellation token checked. Proceeding with database connection.");
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_GetCommentsForAPost";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@PostID", postId);
+                command.AddParameter("@PageNumber", pageNumber);
+                command.AddParameter("@PageSize", pageSize);
+                command.AddParameter("@SortColumn", sortColumn ?? "CreatedAt");
+                command.AddParameter("@SortDirection", sortDirection?.ToUpper() == "DESC" ? "DESC" : "ASC");
+
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation("Connected to database successfully.");
+
+                _logger.LogInformation("Executing stored procedure '{StoredProcedure}' to retrieve posts.", command.CommandText);
+                var comments = new List<PostComment>();
+
+                using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var comment = PostComment.FetchFromDatabase(
+                        reader.GetGuid(reader.GetOrdinal("CommentID")),
+                        reader.GetGuid(reader.GetOrdinal("PostID")),
+                        reader.GetGuid(reader.GetOrdinal("UserProfileID")),
+                        reader.GetString(reader.GetOrdinal("CommentContent")),
+                        reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                        );
+
+                    if (!comment.IsSuccess)
+                    {
+                        _logger.LogWarning("Failed to fetch post comments: {Errors}", comment.Errors);
+                        return OperationResult<IEnumerable<PostComment>>.Failure(comment.Errors);
+                    }
+
+                    comments.Add(comment.Data);
+                }
+
+                _logger.LogInformation("Successfully retrieved {CommentCount} comments for post: {PostID}", comments.Count, postId);
+                return OperationResult<IEnumerable<PostComment>>.Success(comments);
+            }
+            catch (OperationCanceledException ex)
+            {
+                return _errorHandler.HandleCancelationToken<IEnumerable<PostComment>>(ex);
+            }
+            catch (Exception ex)
+            {
+                return _errorHandler.HandleException<IEnumerable<PostComment>>(ex);
+            }
+        }
+
+        public async Task<OperationResult<int>> GetPostCommentsCountAsync(Guid postId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_CountPostCommentsByPost";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@PostID", postId);
+
+
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation($"{_messagingService.GetSuccessMessage(
+                    nameof(SuccessMessage.DataConnectionSuccess))}");
+
+                _logger.LogInformation("Executing stored procedure '{StoredProcedure}' for comment count.", command.CommandText);
+                var result = await command.ExecuteScalarAsync(cancellationToken);
+
+                if (result != null && int.TryParse(result.ToString(), out int postCount))
+                {
+                    _logger.LogInformation("Successfully retrieved comments count: {CommentCount} for PostID: {PostID}", postCount, postId);
+                    return OperationResult<int>.Success(postCount);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to retrieve comment count. Returning 0 for PostID: {PostID}", postId);
+                    return OperationResult<int>.Failure(new Error(
+                        ErrorCode.NotFound,
+                        "Comment Count Retrieval Failed",
+                        "No comments found for the given post."
+                    ));
+                }
+
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("comment count retrieval operation was canceled. PostID: {PostID}, Exception: {Exception}",
+                    postId, ex.Message);
+                return _errorHandler.HandleCancelationToken<int>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while retrieving comment count for PostID '{postId}'", ex);
+                return _errorHandler.HandleException<int>(ex);
             }
         }
     }

@@ -18,18 +18,18 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.CommandHandlers
         : IRequestHandler<UpdatePostContentsCommand, OperationResult<bool>>
     {
         private readonly IPostRepository _postRepository;
-        private readonly IAppLogger<GetPostByIDQueryHandler> _appLogger;
+        private readonly IAppLogger<UpdatePostContentsCommandHandler> _appLogger;
         private readonly ILoggMessagingService _messagingService;
         private readonly IErrorHandler _errorHandler;
-        private readonly IFileService _fileService;
+        
 
-        public UpdatePostContentsCommandHandler(IPostRepository postRepository, IAppLogger<GetPostByIDQueryHandler> appLogger, ILoggMessagingService messagingService, IErrorHandler errorHandler, IFileService fileService)
+        public UpdatePostContentsCommandHandler(IPostRepository postRepository, IAppLogger<UpdatePostContentsCommandHandler> appLogger, ILoggMessagingService messagingService, IErrorHandler errorHandler)
         {
             _postRepository = postRepository;
             _appLogger = appLogger;
             _messagingService = messagingService;
             _errorHandler = errorHandler;
-            _fileService = fileService;
+            
         }
 
         public async Task<OperationResult<bool>> Handle(UpdatePostContentsCommand request, CancellationToken cancellationToken)
@@ -38,7 +38,8 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.CommandHandlers
             {
                 var postResult = await _postRepository.GetPostByPostIDAsync(
                     request.PostID, cancellationToken);
-                if (!postResult.IsSuccess) return OperationResult<bool>.Failure(postResult.Errors);
+                if (!postResult.IsSuccess) 
+                    return OperationResult<bool>.Failure(postResult.Errors);
 
                 var post = postResult.Data;
 

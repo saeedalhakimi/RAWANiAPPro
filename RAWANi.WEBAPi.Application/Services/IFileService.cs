@@ -10,5 +10,6 @@ namespace RAWANi.WEBAPi.Application.Services
     {
         Task<string> SaveFileAsync(Stream fileStream, string fileName);
         string GenerateUniqueFileName(string fileName);
+        Task<bool> DeleteFileAsync(string filePath);
     }
 }
