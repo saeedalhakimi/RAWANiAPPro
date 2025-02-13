@@ -358,7 +358,6 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
             }
         }
 
-
         public async Task<OperationResult<bool>> IsUserProfileExistsAsync(
             Guid userProfileId, CancellationToken cancellationToken)
         {
@@ -727,6 +726,167 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
             {
                 _logger.LogError($"An unexpected error occurred while retrieving comment count for PostID '{postId}'", ex);
                 return _errorHandler.HandleException<int>(ex);
+            }
+        }
+
+        public async Task<OperationResult<PostComment>> GetCommentByIDAsync(Guid commentID, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _logger.LogDebug("Cancellation token checked. Proceeding with database connection.");
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_GetCommentByID";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@CommentID", commentID);
+
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation($"{_messagingService.GetSuccessMessage(
+                    nameof(SuccessMessage.DataConnectionSuccess))}");
+
+                _logger.LogInformation("Executing stored procedure '{StoredProcedure}' for post creation.", command.CommandText);
+
+                using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    var comment = PostComment.FetchFromDatabase(
+                                            reader.GetGuid(reader.GetOrdinal("CommentID")),
+                                            reader.GetGuid(reader.GetOrdinal("PostID")),
+                                            reader.GetGuid(reader.GetOrdinal("UserProfileID")),
+                                            reader.GetString(reader.GetOrdinal("CommentContent")),
+                                            reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                                            reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+                                            );
+                    if (!comment.IsSuccess) return OperationResult<PostComment>.Failure(comment.Errors);
+                    
+                    _logger.LogInformation(_messagingService.GetSuccessMessage(
+                        nameof(SuccessMessage.RetrieveSuccess)));
+
+                    return OperationResult<PostComment>.Success(comment.Data!);
+                }
+                else
+                {
+                    _logger.LogWarning($"Comment {commentID} Not Found");
+                    return OperationResult<PostComment>.Failure(new Error(
+                        ErrorCode.NotFound,
+                        "Resource Not Found",
+                        $"Comment with ID {commentID} was not found in the database."
+                    ));
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("Comment retrieve operation was canceled. CommentID: {CommentID}, Exception: {Exception}",
+                    commentID, ex.Message);
+                return _errorHandler.HandleCancelationToken<PostComment>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while retrieveing comment '{commentID}", ex);
+                return _errorHandler.HandleException<PostComment>(ex);
+            }
+        }
+
+        public async Task<OperationResult<bool>> DeleteCommentAsync(
+            Guid commentID, Guid userProfileId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _logger.LogDebug("Cancellation token checked. Proceeding with database connection.");
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(_connectionString, cancellationToken);
+                using var command = connection.CreateCommand();
+                command.CommandText = "SP_DeleteComment";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@CommentID", commentID);
+                command.AddParameter("@UserProfileID", userProfileId);
+
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation($"{_messagingService.GetSuccessMessage(nameof(SuccessMessage.DataConnectionSuccess))}");
+
+                _logger.LogInformation("Executing stored procedure '{StoredProcedure}' for comment deletion.", command.CommandText);
+
+                int rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation($"Comment deleted successfully - rows affected: {rowsAffected}");
+                    return OperationResult<bool>.Success(true);
+                }
+                else
+                {
+                    _logger.LogWarning("Comment deletion failed. No rows affected. CommentID: {CommentID}", commentID);
+                    return OperationResult<bool>.Failure(new Error(
+                        ErrorCode.RESOURCENOTFOUND,
+                        "Deletion Failed",
+                        $"Failed to delete comment. No matching record found. Comment Id: {command}"
+                    ));
+                }
+
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("Comment deletion operation was canceled. CommentID: {CommentID}, Exception: {Exception}", commentID, ex.Message);
+                return _errorHandler.HandleCancelationToken<bool>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while deleting comment '{commentID}'", ex);
+                return _errorHandler.HandleException<bool>(ex);
+            }
+        }
+
+        public async Task<OperationResult<bool>> UpdateCommentContentsAsync(
+            PostComment postComment, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                await using var connection = await _connectionFactory.CreateConnectionAsync(
+                    _connectionString, cancellationToken);
+
+                var command = connection.CreateCommand();
+                command.CommandText = "SP_UpdateCommentContents";
+                command.CommandType = CommandType.StoredProcedure;
+                command.AddParameter("@CommentID", postComment.CommentID.Value);
+                command.AddParameter("@CommentContent", postComment.CommentContent.Value);
+                command.AddParameter("@UpdatedAt", postComment.UpdatedAt);
+                command.AddOutputParameter("@RowsAffected", SqlDbType.Int);
+
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+
+                int rowsAffected = Convert.ToInt32(command.GetParameterValue("@RowsAffected"));
+
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation($"Comment update successful - Rows affected: {rowsAffected}");
+                    return OperationResult<bool>.Success(true);
+                }
+                else
+                {
+                    _logger.LogWarning("Comment Update failed. No rows affected. CommentID: {CommentID}", postComment.CommentID.Value);
+                    return OperationResult<bool>.Failure(new Error(
+                        ErrorCode.RESOURCECREATIONFAILED,
+                        "Update Failed",
+                        $"Failed to update comment - Rows affected: {rowsAffected}"
+                    ));
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogWarning("Comment update operation was canceled. CommentID: {CommentID}, Exception: {Exception}", postComment.CommentID.Value, ex.Message);
+                return _errorHandler.HandleCancelationToken<bool>(ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An unexpected error occurred while updating comment '{postComment.CommentID.Value}", ex);
+                return _errorHandler.HandleException<bool>(ex);
             }
         }
     }

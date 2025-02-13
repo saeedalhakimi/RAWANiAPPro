@@ -57,7 +57,8 @@ namespace RAWANi.WEBAPi.Domain.Entities.Posts
 
         public static OperationResult<PostComment> FetchFromDatabase(
             Guid commendId, Guid postId, Guid userProfileId,
-            string commentContent, DateTime createdAt, DateTime updatedAt)
+            string commentContent, DateTime createdAt, 
+            DateTime updatedAt)
         {
             var commentID = GuidID.Create(commendId);
             if (!commentID.IsSuccess) return OperationResult<PostComment>
@@ -86,6 +87,16 @@ namespace RAWANi.WEBAPi.Domain.Entities.Posts
             };
 
             return OperationResult<PostComment>.Success(postComment);
+        }
+
+        public OperationResult<bool> UpdateComment(string commentContent)
+        {
+            var commentContents = Bodies.Create(commentContent);
+            if (!commentContents.IsSuccess) return OperationResult<bool>
+                    .Failure(commentContents.Errors);
+            CommentContent = commentContents.Data;
+            UpdatedAt = DateTime.UtcNow;
+            return OperationResult<bool>.Success(true);
         }
     }
 }

@@ -91,11 +91,13 @@
             /// Route template for accessing comments for a specific post.
             /// </summary>
             public const string PostCommentsRoute = "{postId}/comments";
+            public const string PostWithCommentsRoute = "{postId}/post-with-comments";
+            public const string CommentIDRoute = "comments/{CommentId}";
 
             /// <summary>
             /// Route template for accessing a specific comment by ID within a post.
             /// </summary>
-            public const string PostCommentsIdRoute = "{postId}/comments/{commentId}";
+            public const string PostOneCommentIdRoute = "{postId}/comments/{commentId}";
         }
 
         /// <summary>

@@ -15,15 +15,15 @@ using System.Threading.Tasks;
 
 namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.QueryHandlers
 {
-    public class GetAllCommentsForAPostQueryHandler
-        : IRequestHandler<GetAllCommentsForAPostQuery, OperationResult<PagedResponse<PostCommentResponseDto>>>
+    public class GetPostWithCommentsQueryHandler
+        : IRequestHandler<GetPostWithCommentsQuery, OperationResult<PostWithCommentsResponseDto>>
     {
         private readonly IPostRepository _postRepository;
-        private readonly IAppLogger<GetAllCommentsForAPostQueryHandler> _appLogger;
+        private readonly IAppLogger<GetPostWithCommentsQueryHandler> _appLogger;
         private readonly ILoggMessagingService _messagingService;
         private readonly IErrorHandler _errorHandler;
 
-        public GetAllCommentsForAPostQueryHandler(IPostRepository postRepository, IAppLogger<GetAllCommentsForAPostQueryHandler> appLogger, ILoggMessagingService messagingService, IErrorHandler errorHandler)
+        public GetPostWithCommentsQueryHandler(IPostRepository postRepository, IAppLogger<GetPostWithCommentsQueryHandler> appLogger, ILoggMessagingService messagingService, IErrorHandler errorHandler)
         {
             _postRepository = postRepository;
             _appLogger = appLogger;
@@ -31,52 +31,51 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.QueryHandlers
             _errorHandler = errorHandler;
         }
 
-        public async Task<OperationResult<PagedResponse<PostCommentResponseDto>>> Handle(GetAllCommentsForAPostQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PostWithCommentsResponseDto>> Handle(GetPostWithCommentsQuery request, CancellationToken cancellationToken)
         {
             try
             {
                 var post = await _postRepository.GetPostByPostIDAsync(request.PostID, cancellationToken);
-                if (!post.IsSuccess) 
-                    return OperationResult<PagedResponse<PostCommentResponseDto>>
+                if (!post.IsSuccess)
+                    return OperationResult<PostWithCommentsResponseDto>
                         .Failure(post.Errors);
 
                 var commentsTotalCount = await _postRepository.GetPostCommentsCountAsync(
                     request.PostID, cancellationToken);
                 if (!commentsTotalCount.IsSuccess)
-                    return OperationResult<PagedResponse<PostCommentResponseDto>>
+                    return OperationResult<PostWithCommentsResponseDto>
                         .Failure(commentsTotalCount.Errors);
 
                 var comments = await _postRepository.GetCommentsForPostAsync(
                     request.PostID, request.PageNumber, request.PageSize,
                     request.SortColumn, request.SortDirection, cancellationToken);
                 if (!comments.IsSuccess)
-                    return OperationResult<PagedResponse<PostCommentResponseDto>>
+                    return OperationResult<PostWithCommentsResponseDto>
                         .Failure(comments.Errors);
 
                 var commentsCount = comments.Data?.ToList().Count ?? 0;
                 var commentDtos = comments.Data?.Select(PostMappers.ToPostCommentResponseDto).ToList() ?? new List<PostCommentResponseDto>();
 
-                var response = new PagedResponse<PostCommentResponseDto>(
-                    commentDtos ,request.PageNumber, request.PageSize, commentsTotalCount.Data ,commentsCount);
+                var pagedComments = new PagedResponse<PostCommentResponseDto>(
+                    commentDtos, request.PageNumber, request.PageSize, commentsTotalCount.Data, commentsCount);
 
-                //var postResonse = PostMappers.ToPostResponseDto(post.Data!);
+                var postResonse = PostMappers.ToPostResponseDto(post.Data!);
 
-                //var paggedResponseWithPost = new PostWithCommentsResponseDto
-                //{
-                //    Post = postResonse,
-                //    Comments = response
-                //}
+                var postWithPagedComments = new PostWithCommentsResponseDto
+                {
+                    Post = postResonse,
+                    Comments = pagedComments,
+                };
 
-                return OperationResult<PagedResponse<PostCommentResponseDto>>.Success(response);
-
+                return OperationResult<PostWithCommentsResponseDto>.Success(postWithPagedComments);
             }
             catch (OperationCanceledException ex)
             {
-                return _errorHandler.HandleCancelationToken<PagedResponse<PostCommentResponseDto>>(ex);
+                return _errorHandler.HandleCancelationToken<PostWithCommentsResponseDto>(ex);
             }
             catch (Exception ex)
             {
-                return _errorHandler.HandleException<PagedResponse<PostCommentResponseDto>>(ex);    
+                return _errorHandler.HandleException<PostWithCommentsResponseDto>(ex);  
             }
         }
     }

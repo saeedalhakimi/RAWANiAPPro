@@ -24,7 +24,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
         private readonly IMediator _mediator;
         private readonly IAppLogger<PostsController> _logger;
         public PostsController(
-            IAppLogger<PostsController> appLogger, IMediator mediator) 
+            IAppLogger<PostsController> appLogger, IMediator mediator)
             : base(appLogger)
         {
             _logger = appLogger;
@@ -70,7 +70,6 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             return Ok(result);
         }
 
-
         [HttpGet(ApiRoutes.Posts.PostIdRoute, Name = "GetPostByID")]
         [ValidateGuid("postId")]
         public async Task<IActionResult> GetPostByID(
@@ -96,7 +95,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             _logger.LogInformation("Post retrieved successfully. PostID: {PostID}",
                 postId);
 
-            
+
             return Ok(result);
 
         }
@@ -140,12 +139,12 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess)
             {
-                _logger.LogError("Failed to create the post. Errors: {Errors}", 
+                _logger.LogError("Failed to create the post. Errors: {Errors}",
                     string.Join(", ", result.Errors));
                 return HandleErrorResponse(result);
             }
 
-            _logger.LogInformation("Post created successfully. PostID: {PostID}", 
+            _logger.LogInformation("Post created successfully. PostID: {PostID}",
                 result.Data?.PostID);
 
             // Step 4: Return the response
@@ -185,7 +184,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             return Ok(result);
         }
 
-        [HttpPut(ApiRoutes.Posts.UpdatePostImage, Name ="UpdatePostImage")]
+        [HttpPut(ApiRoutes.Posts.UpdatePostImage, Name = "UpdatePostImage")]
         [ValidateGuid("postId")]
 
         public async Task<IActionResult> UpdatePostImage(
@@ -216,7 +215,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             return Ok(result);
         }
 
-        [HttpDelete(ApiRoutes.Posts.PostIdRoute ,Name = "DeletePost")]
+        [HttpDelete(ApiRoutes.Posts.PostIdRoute, Name = "DeletePost")]
         [ValidateGuid("postId")]
         public async Task<IActionResult> DeletePost(
             [FromRoute] string postId,
@@ -270,8 +269,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
         public async Task<IActionResult> CreatePostComment(
             [FromRoute] string postId,
             [FromBody] CreatePostCommentDto createPostCommentDto,
-            CancellationToken cancellationToken
-            )
+            CancellationToken cancellationToken)
         {
             var userProfileId = HttpContext.GetUserProfileIdClaimValue();
             if (userProfileId == null)
@@ -314,6 +312,116 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
                 SortDirection = sortDirection
             };
             var result = await _mediator.Send(query, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
+
+        [HttpGet(ApiRoutes.Posts.PostOneCommentIdRoute, Name = "GetAPostComment")]
+        [ValidateGuid("postId")]
+        [ValidateGuid("commentId")]
+        public async Task<IActionResult> GetAPostComment(
+            [FromRoute] string postId,
+            [FromRoute] string commentId,
+            CancellationToken cancellationToken)
+        {
+            var query = new GetAPostCommentQuery
+            {
+                PostId = Guid.Parse(postId),
+                CommentId = Guid.Parse(commentId)
+            };
+            var result = await _mediator.Send(query, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
+
+        [HttpGet(ApiRoutes.Posts.PostWithCommentsRoute, Name = "GetPostWithComments")]
+        [ValidateGuid("postId")]
+        public async Task<IActionResult> GetPostWithComments(
+            [FromRoute] string postId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortColumn = "CreatedAt",
+            [FromQuery] string sortDirection = "ASC",
+            CancellationToken cancellationToken = default)
+        {
+            var query = new GetPostWithCommentsQuery
+            {
+                PostID = Guid.Parse(postId),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortColumn = sortColumn,
+                SortDirection = sortDirection
+            };
+            var result = await _mediator.Send(query, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
+
+        [HttpGet(ApiRoutes.Posts.CommentIDRoute, Name = "GetCommentByID")]
+        [ValidateGuid("commentId")]
+        public async Task<IActionResult> GetCommentByID(
+            [FromRoute] string commentId,
+            CancellationToken cancellationToken)
+        {
+            var query = new GetCommentByIDQuery
+            {
+                CommentID = Guid.Parse(commentId)
+            };
+            var result = await _mediator.Send(query, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
+
+        [HttpPut(ApiRoutes.Posts.CommentIDRoute, Name = "UpdateComment")]
+        [ValidateGuid("commentId")]
+        public async Task<IActionResult> UpdateComment(
+            [FromRoute] string commentId,
+            [FromBody] UpdateCommentDto updateCommentDto,
+            CancellationToken cancellationToken)
+        {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+            if (userProfileId == null)
+            {
+                _logger.LogWarning("Invalid or missing UserProfileID claim.");
+                return BadRequest(new Error(
+                    ErrorCode.BadRequest,
+                    "Invalid Claim",
+                    "The UserProfileID claim is missing or invalid."
+                ));
+            }
+            var command = new UpdatePostCommentCommand
+            {
+                CommentID = Guid.Parse(commentId),
+                UserProfileID = userProfileId.Value,
+                CommentContent = updateCommentDto.CommentContent
+            };
+            var result = await _mediator.Send(command, cancellationToken);
+            if (!result.IsSuccess) return HandleErrorResponse(result);
+            return Ok(result);
+        }
+
+        [HttpDelete(ApiRoutes.Posts.CommentIDRoute, Name = "DeleteComment")]
+        [ValidateGuid("commentId")]
+        public async Task<IActionResult> DeleteComment(
+            [FromRoute] string commentId,
+            CancellationToken cancellationToken)
+        {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+            if (userProfileId == null)
+            {
+                _logger.LogWarning("Invalid or missing UserProfileID claim.");
+                return BadRequest(new Error(
+                    ErrorCode.BadRequest,
+                    "Invalid Claim",
+                    "The UserProfileID claim is missing or invalid."
+                ));
+            }
+            var command = new DeletePostCommentCommand
+            {
+                CommentID = Guid.Parse(commentId),
+                UserProfileID = userProfileId.Value
+            };
+            var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess) return HandleErrorResponse(result);
             return Ok(result);
         }

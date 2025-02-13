@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using MediatR;
+﻿using MediatR;
 using RAWANi.WEBAPi.Application.Contracts.PostDtos.Responses;
 using RAWANi.WEBAPi.Domain.Models;
 using System;
@@ -10,7 +9,8 @@ using System.Threading.Tasks;
 
 namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.Queries
 {
-    public class GetPostCommentQuery : IRequest<OperationResult<PostCommentResponseDto>>
+    public class GetCommentByIDQuery : IRequest<OperationResult<PostCommentResponseDto>>
     {
+        public Guid CommentID { get; set; }
     }
 }
