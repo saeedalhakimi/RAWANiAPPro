@@ -18,6 +18,15 @@ namespace RAWANi.WEBAPi.Services
             _logger.Information(message, args);
         }
 
+
+        public void LogWarning(string message)
+        {
+            _logger.Warning(message);
+        }
+        public void LogWarning(string message, params object[] args)
+        {
+            _logger.Warning(message, args);
+        }
         public void LogWarning(string message, Exception ex = null)
         {
             if (ex == null)
@@ -25,6 +34,9 @@ namespace RAWANi.WEBAPi.Services
             else
                 _logger.Warning(ex, message);
         }
+
+
+
 
         public void LogError(string message, Exception ex = null)
         {
@@ -34,10 +46,7 @@ namespace RAWANi.WEBAPi.Services
                 _logger.Error(ex, message);
         }
 
-        public void LogWarning(string message, params object[] args)
-        {
-            _logger.Warning(message, args);
-        }
+        
 
         public void LogError(string message, params object[] args)
         {

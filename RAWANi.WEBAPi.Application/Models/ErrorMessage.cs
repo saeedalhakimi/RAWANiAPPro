@@ -8,6 +8,11 @@ namespace RAWANi.WEBAPi.Application.Models
 {
     public class ErrorMessage
     {
+       
+        public const string InvalidClaim = ": Invalid or missing claim.";
+
+        public const string ResourceRetrievalFailed = "Failed to retrieve resources.";
+
         public const string NotFound = ": Resource Not Found.";
         public const string OperationCanceled = ": Operation canceled due to client request termination.";
         public const string DatabaseError = ": Database error; Failed to procces data.";

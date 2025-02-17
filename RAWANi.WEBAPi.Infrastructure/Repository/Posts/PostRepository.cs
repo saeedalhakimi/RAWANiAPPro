@@ -220,7 +220,7 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
                     _logger.LogWarning($"Post {postID} Not Found");
                     return OperationResult<Post>.Failure(new Error(
                         ErrorCode.NotFound,
-                        "Resource Not Found",
+                        "Post not found",
                         $"Post with ID {postID} was not found in the database."
                     ));
                 }
@@ -239,8 +239,10 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
             }
         }
 
-        public async Task<OperationResult<int>> GetpostCountAsync(Guid userProfileId, CancellationToken cancellationToken)
+        public async Task<OperationResult<int>> GetPostCountAsync(Guid userProfileId, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Attempting to retrieve total post count...");
+
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -256,7 +258,9 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
 
                 _logger.LogDebug("Post id parameter added to the command: {UserProfileID}", userProfileId);
 
+                _logger.LogInformation("Connecting to database....");
                 await connection.OpenAsync(cancellationToken);
+
                 _logger.LogInformation($"{_messagingService.GetSuccessMessage(
                     nameof(SuccessMessage.DataConnectionSuccess))}");
 
@@ -297,6 +301,7 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
               Guid userProfileId, int pageNumber, int pageSize, string sortColumn,
               string sortDirection, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Attempting to retrieve posts with pagination...");
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -314,8 +319,11 @@ namespace RAWANi.WEBAPi.Infrastructure.Repository.Posts
                 command.AddParameter("@SortColumn", sortColumn ?? "CreatedAt");
                 command.AddParameter("@SortDirection", sortDirection?.ToUpper() == "DESC" ? "DESC" : "ASC");
 
+                _logger.LogInformation("Connecting to database....");
                 await connection.OpenAsync(cancellationToken);
-                _logger.LogInformation("Connected to database successfully.");
+
+                _logger.LogInformation($"{_messagingService.GetSuccessMessage(
+                    nameof(SuccessMessage.DataConnectionSuccess))}");
 
                 _logger.LogInformation("Executing stored procedure '{StoredProcedure}' to retrieve posts.", command.CommandText);
 

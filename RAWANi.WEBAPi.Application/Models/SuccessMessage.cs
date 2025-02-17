@@ -8,9 +8,15 @@ namespace RAWANi.WEBAPi.Application.Models
 {
     public class SuccessMessage
     {
+
+        public const string QueryExecuted = ": Query executed successfully for ";
+        public const string RequestProcessed = ": Request processed successfully.";
+
+        public const string RetrieveSuccess = ": Resources retrieved successfully.";
+
         public const string TransactionSuccess = ": Transaction committed successfully.";
         public const string DataConnectionSuccess = ": Database connection established successfully.";
-        public const string RetrieveSuccess = ": Resources retrieved successfully.";
+        
         public const string ResourcesMappedSuccessfully = ": Resources have been successfully mapped.";
         public const string MDItRProcessSuccess = "MDItR Handling Completed Successfully";
         public const string CreationSuccess = ": Created Successfully";

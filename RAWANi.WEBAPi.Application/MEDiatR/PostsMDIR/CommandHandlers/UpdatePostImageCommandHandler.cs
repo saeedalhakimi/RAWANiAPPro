@@ -67,7 +67,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.CommandHandlers
                     ));
 
 
-                post.updatePostImage(newPostImageLink);
+                post.UpdatePostImage(newPostImageLink);
 
                 var result = await _postRepository.UpdatePostImageAsync(post, cancellationToken);
                 if (!result.IsSuccess)

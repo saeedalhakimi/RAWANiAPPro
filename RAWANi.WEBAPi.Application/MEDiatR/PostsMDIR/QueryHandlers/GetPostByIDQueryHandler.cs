@@ -18,7 +18,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.QueryHandlers
         : IRequestHandler<GetPostByIDQuery, OperationResult<PostResponseDto>>
     {
         private readonly IPostRepository _postRepository;
-        private readonly IAppLogger<GetPostByIDQueryHandler> _appLogger;
+        private readonly IAppLogger<GetPostByIDQueryHandler> _logger;
         private readonly ILoggMessagingService _messagingService;
         private readonly IErrorHandler _errorHandler;
 
@@ -29,7 +29,7 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.QueryHandlers
             IErrorHandler errorHandler)
         {
             _postRepository = postRepository;
-            _appLogger = appLogger;
+            _logger = appLogger;
             _messagingService = messagingService;
             _errorHandler = errorHandler;
         }
@@ -37,21 +37,36 @@ namespace RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.QueryHandlers
         public async Task<OperationResult<PostResponseDto>> Handle(
             GetPostByIDQuery request, CancellationToken cancellationToken)
         {
+            _logger.LogInformation($"Handling request to retrieve post with ID: {request.PostID}");
+
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                _logger.LogDebug("Cancellation token verified. Proceeding with post retrieval.");
+
+                _logger.LogInformation($"Fetching post from repository for PostID: {request.PostID}");
                 var post = await _postRepository.GetPostByPostIDAsync(
                     request.PostID, cancellationToken);
-                if (!post.IsSuccess) return OperationResult<PostResponseDto>.Failure(post.Errors);
+                if (!post.IsSuccess) 
+                {
+                    _logger.LogWarning($"Post retrieval failed for PostID: {request.PostID}. " +
+                        $"Reason: {string.Join(", ", post.Errors.Select(e => e.Message))}");
+                    return OperationResult<PostResponseDto>.Failure(post.Errors); 
+                }
 
                 var response = PostMappers.ToPostResponseDto(post.Data!);
+
+                _logger.LogInformation($"Successfully retrieved post with ID: {request.PostID}");
                 return OperationResult<PostResponseDto>.Success(response);
             }
             catch (OperationCanceledException ex)
             {
+                _logger.LogWarning($"Request to retrieve post with ID: {request.PostID} was canceled.");
                 return _errorHandler.HandleCancelationToken<PostResponseDto>(ex);
             }
             catch (Exception ex)
             {
+                _logger.LogError($"An unexpected error occurred while retrieving post with ID: {request.PostID}", ex);
                 return _errorHandler.HandleException<PostResponseDto>(ex);  
             }
         }

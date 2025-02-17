@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using RAWANi.WEBAPi.Application.Contracts.PostDtos.Requests;
 using RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.Commnads;
 using RAWANi.WEBAPi.Application.MEDiatR.PostsMDIR.Queries;
+using RAWANi.WEBAPi.Application.Models;
 using RAWANi.WEBAPi.Application.Services;
 using RAWANi.WEBAPi.Domain.Models;
 using RAWANi.WEBAPi.Extensions;
@@ -23,15 +24,23 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
     {
         private readonly IMediator _mediator;
         private readonly IAppLogger<PostsController> _logger;
+        private readonly ILoggMessagingService _messagingService;
         public PostsController(
-            IAppLogger<PostsController> appLogger, IMediator mediator)
+            IAppLogger<PostsController> appLogger, 
+            IMediator mediator,
+            ILoggMessagingService messagingService)
             : base(appLogger)
         {
             _logger = appLogger;
             _mediator = mediator;
+            _messagingService = messagingService;
         }
 
         [HttpGet(Name = " GetPostsWithPagination")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetPostsWithPagination(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
@@ -39,17 +48,20 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             [FromQuery] string sortDirection = "ASC",
             CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation($"{_messagingService.GetLoggMessage(nameof(LoggMessage.RequestReceived))} posts retrieving.");
+
+            _logger.LogInformation(_messagingService.GetLoggMessage(nameof(LoggMessage.RetrievingClaims)));
             var userProfileId = HttpContext.GetUserProfileIdClaimValue();
             if (userProfileId == null)
             {
-                _logger.LogWarning("Invalid or missing UserProfileID claim.");
-                return BadRequest(new Error(
-                    ErrorCode.BadRequest,
-                    "Invalid Claim",
-                    "The UserProfileID claim is missing or invalid."
-                ));
+                _logger.LogWarning(_messagingService.GetWarningMessage(nameof(WarningMessage.InvalidClaim)));
+                return BadRequest(new Error(ErrorCode.BadRequest,
+                    _messagingService.GetErrorMessage(nameof(ErrorMessage.InvalidClaim)),
+                    _messagingService.GetDetailedMessage(nameof(DetailedMessage.MissingOrInvalidUserProfileIdClaim)))
+                );
             }
 
+            _logger.LogInformation($"{_messagingService.GetLoggMessage(nameof(LoggMessage.ExecutingQuery))} GetPostsWithPaginationQuery... ");
             var query = new GetPostsWithPaginationQuery
             {
                 UserProfile = userProfileId.Value,
@@ -62,15 +74,23 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             var result = await _mediator.Send(query, cancellationToken);
             if (!result.IsSuccess)
             {
-                _logger.LogError("Failed to retrieve posts. Errors: {Errors}",
-                    string.Join(", ", result.Errors));
+                _logger.LogError("{ErrorMessage}. Errors: {Errors}"
+                    ,_messagingService.GetErrorMessage(nameof(ErrorMessage.ResourceRetrievalFailed))
+                    ,string.Join(", ", result.Errors));
                 return HandleErrorResponse(result);
             }
 
+            _logger.LogInformation($"{_messagingService.GetSuccessMessage(nameof(SuccessMessage.QueryExecuted))} GetPostsWithPaginationQuery.");
+            _logger.LogInformation(_messagingService.GetSuccessMessage(nameof(SuccessMessage.RequestProcessed)));
+            
             return Ok(result);
         }
 
         [HttpGet(ApiRoutes.Posts.PostIdRoute, Name = "GetPostByID")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ValidateGuid("postId")]
         public async Task<IActionResult> GetPostByID(
             [FromRoute] string postId,
@@ -83,6 +103,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             {
                 PostID = Guid.Parse(postId)
             };
+
             _logger.LogInformation("Sending the query to the mediator.");
             var result = await _mediator.Send(query, cancellationToken);
             if (!result.IsSuccess)
@@ -95,7 +116,7 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
             _logger.LogInformation("Post retrieved successfully. PostID: {PostID}",
                 postId);
 
-
+            _logger.LogInformation(_messagingService.GetSuccessMessage(nameof(SuccessMessage.RequestProcessed)));
             return Ok(result);
 
         }
@@ -105,8 +126,8 @@ namespace RAWANi.WEBAPi.Controllers.V1.Post
         public async Task<IActionResult> CreatePost(
             [FromForm] CreatePostDto createPostDto,
             CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Starting to process the CreatePost request.");
+        { 
+            _logger.LogInformation("Starting to process the create post request.");
 
             // Step 1: Retrieve the UserProfileID from the claims
             _logger.LogInformation("Retrieving UserProfileID from the claims.");

@@ -185,7 +185,7 @@ namespace RAWANi.WEBAPi.Domain.Entities.Posts
             return OperationResult<Post>.Success(this);
         }
 
-        public void updatePostImage(string postImageLink)
+        public void UpdatePostImage(string postImageLink)
         { 
             ImageLink = postImageLink;
             UpdatedAt = DateTime.UtcNow;

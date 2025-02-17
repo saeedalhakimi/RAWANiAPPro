@@ -12,5 +12,7 @@ namespace RAWANi.WEBAPi.Application.Services
         string GetSuccessMessage(string key);
         string GetLoggMessage(string key);
         string GetLoggMessage(string key, params object[] args); // New overload to support formatting
+        string GetWarningMessage(string key, params object[] args);
+        string GetDetailedMessage(string key, params object[] args);
     }
 }

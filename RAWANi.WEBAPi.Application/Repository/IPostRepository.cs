@@ -16,7 +16,7 @@ namespace RAWANi.WEBAPi.Application.Repository
         Task<OperationResult<Post>> GetPostByPostIDAsync(Guid postID, CancellationToken cancellationToken);
         Task<OperationResult<bool>> UpdatePostImageAsync(Post post, CancellationToken cancellationToken);
         Task<OperationResult<bool>> DeletePostAsync(Guid postId, Guid userProfileId, CancellationToken cancellationToken);
-        Task<OperationResult<int>> GetpostCountAsync(Guid userProfileId, CancellationToken cancellationToken);
+        Task<OperationResult<int>> GetPostCountAsync(Guid userProfileId, CancellationToken cancellationToken);
         Task<OperationResult<IEnumerable<Post>>> GetPostsWithPaginationAsync(
             Guid userProfileId,
             int pageNumber,
